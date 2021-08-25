@@ -1,0 +1,46 @@
+{
+  "name": "elba-balancer",
+  "version": "0.0.1",
+  "description": "Load balancer with retries",
+  "main": "src/main.ts",
+  "scripts": {
+    "prebuild": "rimraf dist",
+    "build": "tsc",
+    "start": "node dist/main",
+    "start:dev": "nodemon --config nodemon.json",
+    "start:prod": "node dist/main",
+    "pretest": "tsc",
+    "test": "lab -I require -a @hapi/code"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gabriel-pinheiro/elba-balancer.git"
+  },
+  "author": "Gabriel Pinheiro <gabrielctpinheiro@gmail.com>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/gabriel-pinheiro/elba-balancer/issues"
+  },
+  "homepage": "https://github.com/gabriel-pinheiro/elba-balancer#readme",
+  "dependencies": {
+    "@hapi/hapi": "^20.1.4",
+    "@mocko/logger": "^2.1.0",
+    "debug": "^4.3.1",
+    "dotenv": "^10.0.0",
+    "inversify": "^5.1.1",
+    "reflect-metadata": "^0.1.13"
+  },
+  "devDependencies": {
+    "@hapi/code": "^8.0.3",
+    "@hapi/lab": "^24.2.1",
+    "@types/dotenv": "^8.2.0",
+    "@types/hapi": "^18.0.5",
+    "@types/hapi__hapi": "^20.0.8",
+    "@types/node": "^15.12.4",
+    "axios": "^0.21.1",
+    "nodemon": "^2.0.7",
+    "rimraf": "^3.0.2",
+    "ts-node": "^10.0.0",
+    "typescript": "^4.3.4"
+  }
+}
