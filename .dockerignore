@@ -4,5 +4,4 @@ Dockerfile
 .gitignore
 node_modules
 dist
-.env
 coverage.html

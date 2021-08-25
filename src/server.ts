@@ -24,8 +24,8 @@ export class Server {
         this.logger.debug('creating the server');
         this.startDate = new Date();
         this.app = new Hapi.Server({
-            host: this.config.get('SERVER_HOST'),
-            port: this.config.getNumber('SERVER_PORT')
+            host: this.config.config.server.host,
+            port: this.config.config.server.port,
         });
 
         this.logger.debug('mapping routes');
@@ -40,7 +40,7 @@ export class Server {
         await this.app.start();
 
         const deltaT = (new Date().getTime() - this.startDate.getTime()) / 1000;
-        this.logger.info(`server started on port ${this.config.getNumber('SERVER_PORT')} after ${deltaT} seconds`);
+        this.logger.info(`server started on port ${this.config.config.server.port} after ${deltaT} seconds`);
         return this;
     }
 

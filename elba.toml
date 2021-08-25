@@ -1,12 +1,7 @@
-# Elba - Load balancer with retries
-Elba is an HTTP load balancer with very customizable retry options. It's ideal for integrations that aren't very stable or integrations behind VPNs or networks that aren't stable.
-
-# Settings
-```toml
 [server]
 host      = "0.0.0.0" # Interface to bind
 port      = 8080    # Port to listen
-verbosity = "info"  # Minimum verbosity to log: debug,info,warn,error,fatal
+verbosity = "debug"  # Minimum verbosity to log: debug,info,warn,error,fatal
 
 
 #
@@ -102,7 +97,3 @@ targets = [
   delay    = 0
   cooldown = 3
   retryable_errors = ["CONNECTION_ERROR", "TIMEOUT", "CODE_5XX"]
-
-```
-
-

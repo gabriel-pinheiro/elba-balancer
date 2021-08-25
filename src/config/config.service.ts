@@ -1,55 +1,31 @@
-import * as dotenv from 'dotenv';
 import * as fs from 'fs';
-import {CONFIG_PATH, DEFAULT_CONFIG_PATH} from "./config.constants";
+import * as toml from '@iarna/toml';
 import {Provider} from "../utils/decorators/provider";
+import { Config, configSchema } from './data/config';
+import { logger } from '../utils/logger';
 
 @Provider()
 export class ConfigProvider {
-    private readonly config: Record<string, string>;
+    public readonly config: Config;
 
-    constructor(configPath: string, defaultConfigPath: string) {
-        this.assertConfig(configPath, defaultConfigPath);
-        this.config = { ...this.fromFile(configPath), ...process.env };
-    }
+    constructor(configPath: string) {
+        try {
+            const config = this.fromFile(configPath);
+            const validation = configSchema.validate(config);
+            if(validation.error) {
+                throw validation.error;
+            }
 
-    get(key: string): string {
-        const value = this.getOptional(key);
-        if (typeof value === 'undefined') {
-            throw new Error(`Missing ${key} config`);
+            this.config = validation.value;
+        } catch (e) {
+            logger.error(`Failed to load config at ${configPath}:`);
+            logger.fatal(e);
         }
-
-        return value;
     }
 
-    getNumber(key: string): number {
-        const value = Number(this.get(key));
-        if (isNaN(value)) {
-            throw new TypeError(`The config ${key} isn't a number`);
-        }
-
-        return value;
+    private fromFile(path: string): Config {
+        return toml.parse(fs.readFileSync(path).toString()) as Config;
     }
-
-    getBoolean(key: string): boolean {
-        return this.get(key).toLowerCase() === 'true';
-    }
-
-    private getOptional(key: string): string | undefined {
-        return this.config[key];
-    }
-
-    private fromFile(path: string): Record<string, string> {
-        return dotenv.parse(fs.readFileSync(path));
-    }
-
-    private assertConfig(configPath: string, defaultConfigPath: string) {
-        if (fs.existsSync(configPath)) {
-            return;
-        }
-
-        fs.copyFileSync(defaultConfigPath, configPath);
-    }
-
 }
 
-export const configProvider = new ConfigProvider(CONFIG_PATH, DEFAULT_CONFIG_PATH);
+export const configProvider = new ConfigProvider(process.env.CONFIG_PATH || './elba.toml');
