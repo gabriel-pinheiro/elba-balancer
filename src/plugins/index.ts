@@ -1,12 +1,14 @@
 import {Provider} from "../utils/decorators/provider";
-import {LoggerPlugin} from "./logger";
 import {IPlugin} from "../utils/plugin";
+import { TracerPlugin } from "./tracer";
 
 @Provider()
 export class PluginProvider {
     constructor(
-        private readonly logger: LoggerPlugin,
+        private readonly tracer: TracerPlugin,
     ) { }
 
-    readonly plugins: IPlugin[] = [this.logger];
+    readonly plugins: IPlugin[] = [
+        this.tracer,
+    ];
 }
