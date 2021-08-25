@@ -1,0 +1,108 @@
+# Elba - Load balancer with retries
+Elba is an HTTP load balancer with very customizable retry options. It's ideal for integrations that aren't very stable or integrations behind VPNs or networks that aren't stable.
+
+# Settings
+```toml
+[server]
+host      = 0.0.0.0 # Interface to bind
+port      = 8080    # Port to listen
+verbosity = "info"  # Minimum verbosity to log: debug,info,warn,error,fatal
+
+
+#
+# You can define as many [[service]]s as you'd like, here is an example with
+# all parameters (note that only the "targets" param is required, you can omit
+# anything else)
+#
+[[service]]
+# This service will be chosen when the Host header is equal to this value
+# Leave this blank or remove it to match any host
+# Only one service can have a blank host
+host    = "api.default.svc.cluster.local"
+
+targets = [
+  "https://www.foo.bar/api/v1",
+  "https://ww2.foo.bar/api/v1",
+  "https://ww3.foo.bar/api/v1"
+]
+
+  [service.timeout]
+  target = 30  # Maximum seconds to wait for a target's response, default: 30
+  global = 120 # Time limit for incoming requests, default: 120
+
+  [service.health]
+  # Consecutive retriable errors to consider a target to be down, default: 3
+  threshold = 3
+  # Time to wait to mark a target as UP again, default: 10
+  timeout   = 10
+  # If all targets are down, balance between all of them instead of failing with 503
+  # This can greatly increase the load in the upstream services because each request
+  # received might go to all of them several times deppending on the configs above
+  # default: false
+  none_healthy_is_all_healthy = false
+
+  [service.retry]
+  limit    = 6 # Retry amount limit, defaults to the amount of targets times two
+  delay    = 0 # Millis to wait between retries, default: 0
+  # Seconds to wait before retrying in a target that previously failed for
+  # a request, default: 3
+  cooldown = 3
+
+  # Errors that will trigger a retry, options available:
+  #
+  # CONNECTION_ERROR
+  # Failed to establish a connection or it failed after
+  # being established
+  #
+  # TIMEOUT
+  # Waited for over service[].timeout.target seconds and
+  # got no response but the connection is still open
+  # 
+  # CODE_403
+  # CODE_404
+  # CODE_429
+  # CODE_500
+  # CODE_502
+  # CODE_503
+  # CODE_504
+  # Consider that code as a retryable error
+  #
+  # CODE_4XX
+  # Consider any code < 500 and >= 400 to be retryable
+  #
+  # CODE_5XX
+  # Consider any code >= 500 to be retryable
+  #
+  # This setting defaults to ["CONNECTION_ERROR", "TIMEOUT", "CODE_5XX"]
+  retryable_errors = ["CONNECTION_ERROR", "TIMEOUT", "CODE_5XX"]
+
+
+#
+# And here is the same service without the comments in case you need it :)
+#
+[[service]]
+host    = "api2.default.svc.cluster.local"
+targets = [
+  "https://www.foo.bar/api/v1",
+  "https://ww2.foo.bar/api/v1",
+  "https://ww3.foo.bar/api/v1"
+]
+
+  [service.timeout]
+  target = 30
+  global = 120
+
+  [service.health]
+  threshold = 3
+  timeout   = 10
+  none_healthy_is_all_healthy = false
+
+  [service.retry]
+  limit    = 6
+  delay    = 0
+  cooldown = 3
+  retryable_errors = ["CONNECTION_ERROR", "TIMEOUT", "CODE_5XX"]
+
+```
+
+
