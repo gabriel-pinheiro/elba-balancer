@@ -107,6 +107,14 @@ export class RequestHandler {
         }
 
         const attemptedTargets = this.attempts.map(a => a.target);
+        const unattemptedTargets = targets.filter(t => !attemptedTargets.includes(t));
+
+        // Balancing between unattempted targets
+        if(unattemptedTargets.length > 0) {
+            return unattemptedTargets[Math.floor(Math.random() * unattemptedTargets.length)];
+        }
+
+        // Sending request to the target that has been attempted the farthest from now
         return targets.reduce((a, b) => attemptedTargets.lastIndexOf(a) <= attemptedTargets.lastIndexOf(b) ? a : b);
     }
 
