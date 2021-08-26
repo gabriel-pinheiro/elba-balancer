@@ -203,7 +203,7 @@ export class RequestHandler {
     }
 
     private buildEntrypointPath(path: string): string {
-        return this.removeLeadingSlash(path) + '/{path}';
+        return this.removeLeadingSlash(path) + '{path}';
     }
 
     private removeLeadingSlash(uri: string): string {

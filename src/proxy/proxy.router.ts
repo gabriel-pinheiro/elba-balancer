@@ -20,7 +20,7 @@ export class ProxyRouter implements IRouter {
     private serviceToRoute(upstream: Upstream): ServerRoute {
         const route: ServerRoute & {config: any} = {
             method: '*',
-            path: '/{path*}',
+            path: '/{any*}',
             handler: (req, h) => this.service.proxy(req, h, upstream),
             config: {
                 payload: {
