@@ -26,38 +26,61 @@ export class RequestHandler {
             let error = null;
             const response = await this.attempt()
                     .catch(e => error = e);
+            const target = this.attempts[this.attempts.length - 1]?.target || 'elba';
 
             // Downstream response
-            if(!error) {
-                const target = this.attempts[this.attempts.length - 1].target;
+            if(!error && !this.mustRetryResponse(response)) {
                 this.logger.info(`request completed`, {
                     delay: new Date().getTime() - this.startTime.getTime(),
                     topic: 'downstream-response',
                     target,
                     attempt: this.attempts.length,
                 });
+                this.upstream.markTargetSuccess(target);
                 return response
                         .header('X-Elba-Attempts', this.attempts.length)
                         .header('X-Elba-Target', target);
             }
 
-            // Downstream error
-            if(!this.mustRetryError(error)) {
+            // Downstream error (retryable or not, limit reached so we return it) or retryable response (limit reached so we return it)
+            if(this.isRetryLimitReached()) {
+                this.logger.error(`downstream request failed after limit with ${error ? `error: ${error}` : `status ${response.statusCode}`}`, {
+                    delay: new Date().getTime() - this.startTime.getTime(),
+                    topic: 'downstream-error',
+                    target,
+                    attempt: this.attempts.length,
+                });
+
+                if(error) {
+                    if(this.mustRetryError(error)) {
+                        this.upstream.markTargetFailure(target);
+                    }
+                    throw error;
+                } else {
+                    // No need to check for retry response, checked before
+                    this.upstream.markTargetFailure(target);
+                    return response;
+                }
+            }
+
+            // Downstream unretryable error
+            if(error && !this.mustRetryError(error)) {
                 this.logger.error(`downstream request failed with error: ${error}`, {
                     delay: new Date().getTime() - this.startTime.getTime(),
                     topic: 'downstream-error',
-                    target: this.attempts[this.attempts.length - 1].target,
+                    target,
                     attempt: this.attempts.length,
                 });
                 throw error;
             }
 
             // Retry
-            this.logger.warn(`upstream request failed with error: ${error}`, {
+            this.logger.warn(`upstream request failed with ${error ? `error: ${error}` : `status ${response.statusCode}`}`, {
                 delay: new Date().getTime() - this.startTime.getTime(),
                 topic: 'upstream-error',
                 attempt: this.attempts.length,
             });
+            this.upstream.markTargetFailure(target);
             await this.delay();
         }
         
@@ -82,10 +105,6 @@ export class RequestHandler {
             xforward: true,
             timeout: this.upstream.config.timeout.target * 1000,
         });
-
-        if(this.mustRetryResponse(response)) {
-            throw new Error('retrying due to response code ' + response.statusCode);
-        }
 
         return response;
     }
@@ -119,10 +138,6 @@ export class RequestHandler {
     }
 
     private mustRetryError(error: any): boolean {
-        if(this.isRetryLimitReached()) {
-            return false;
-        }
-
         const isRetryable = error?.data?.options?.data?.isRetryable;
         if(isRetryable !== void 0) {
             return isRetryable;
@@ -136,10 +151,6 @@ export class RequestHandler {
     }
 
     private mustRetryResponse(response: Hapi.ResponseObject): boolean {
-        if(this.isRetryLimitReached()) {
-            return false;
-        }
-
         return this.mustProxyStatus(response.statusCode);
     }
 
