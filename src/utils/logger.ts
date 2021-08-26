@@ -44,10 +44,10 @@ export class LogfmtLogger {
 
         const trace = rTracer.id() || '000000000000';
         logfmt.log({
-            ...options,
             trace,
             date: new Date().toISOString(),
             level, log,
+            ...options,
         });
     }
 }

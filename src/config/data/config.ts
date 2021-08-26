@@ -50,18 +50,17 @@ export type ServiceRetryConfig = {
 
 export const serviceRetrySchema = Joi.object({
     limit: Joi.number().min(0).optional(),
-    delay: Joi.number().min(0).default(0),
-    cooldown: Joi.number().min(0).default(3),
+    delay: Joi.number().min(0).default(100),
+    cooldown: Joi.number().min(0).default(3000),
     retryable_errors: Joi.array().items(Joi
         .string()
-        .valid('CONNECTION_ERROR', 'TIMEOUT', 'CODE_403',
-            'CODE_404', 'CODE_429', 'CODE_500', 'CODE_502',
-            'CODE_503', 'CODE_504', 'CODE_4XX', 'CODE_5XX')).default(["CONNECTION_ERROR", "TIMEOUT", "CODE_5XX"]),
+        .regex(/^CODE_(\d|X){3}$/)
+        .default(["CODE_502", "CODE_503", "CODE_504"])),
 }).default({
     limit: null,
     delay: 0,
     cooldown: 3,
-    retryable_errors: ["CONNECTION_ERROR", "TIMEOUT", "CODE_5XX"],
+    retryable_errors: ["CODE_502", "CODE_503", "CODE_504"],
 });
 
 export type ServiceConfig = {

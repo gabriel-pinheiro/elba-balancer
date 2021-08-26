@@ -1,16 +1,16 @@
 import {IRouter} from "./utils/router";
 import {Provider} from "./utils/decorators/provider";
-import {CatRouter} from "./api/cat/cat.router";
+import { ProxyRouter } from "./proxy/proxy.router";
 
 @Provider()
 export class MainRouter implements IRouter {
     constructor(
-        private readonly catRouter: CatRouter,
+        private proxyRouter: ProxyRouter,
     ) { }
 
     async getRoutes() {
         const routes = await Promise.all([
-            this.catRouter.getRoutes(),
+            this.proxyRouter.getRoutes(),
         ]);
 
         return routes.flat();
