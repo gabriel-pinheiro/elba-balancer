@@ -69,10 +69,9 @@ targets = [
 
 
 #
-# And here is the same service without the comments in case you need it :)
+# And here is a similar service without the comments in case you need it :)
 #
 [[service]]
-host    = "api2.default.svc.cluster.local"
 targets = [
   "https://www.foo.bar/api/v1",
   "https://ww2.foo.bar/api/v1",
