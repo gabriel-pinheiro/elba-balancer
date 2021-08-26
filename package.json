@@ -26,7 +26,7 @@
     "@hapi/boom": "^9.1.4",
     "@hapi/hapi": "^20.1.4",
     "@iarna/toml": "^2.2.5",
-    "@mocko/h2o2": "^9.0.3",
+    "@mocko/h2o2": "^9.1.0",
     "cls-rtracer": "^2.6.0",
     "inversify": "^5.1.1",
     "joi": "^17.4.2",

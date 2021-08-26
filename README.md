@@ -5,8 +5,8 @@ Elba is an HTTP load balancer with very customizable retry options. It's ideal f
 ```toml
 [server]
 host      = "0.0.0.0" # Interface to bind
-port      = 8080    # Port to listen
-verbosity = "info"  # Minimum verbosity to log: debug,info,warn,error,fatal
+port      = 8080      # Port to listen
+verbosity = "info"    # Minimum verbosity to log: debug,info,warn,error,fatal
 
 
 #
@@ -27,8 +27,9 @@ targets = [
 ]
 
   [service.timeout]
-  target = 30  # Maximum seconds to wait for a target's response, default: 30
-  global = 120 # Time limit for incoming requests, default: 120
+  connect = 3  # Maximum seconds to wait for a connection to be established, default: 3
+  target  = 30  # Maximum seconds to wait for a target's response, default: 30
+  global  = 120 # Time limit for incoming requests, default: 120
 
   [service.health]
   # Consecutive retriable errors to consider a target to be down, default: 3
@@ -42,30 +43,26 @@ targets = [
   none_healthy_is_all_healthy = false
 
   [service.retry]
-  limit    = 6 # Retry amount limit, defaults to the amount of targets times two
-  delay    = 0 # Millis to wait between retries, default: 0
-  # Seconds to wait before retrying in a target that previously failed for
-  # a request, default: 3
-  cooldown = 3
+  limit    = 6   # Retry amount limit, defaults to the amount of targets times two
+  delay    = 100 # Millis to wait between retries, default: 100
+  # Millis to wait before retrying in a target that previously failed for
+  # a request, default: 3000
+  cooldown = 3000
 
   # Errors that will trigger a retry, options available:
   #
-  # CONNECTION_ERROR
-  # Failed to establish a connection or it failed after
-  # being established
+  # CODE_502
+  # Connection errors, like a connection refused, broken pipe, etc
   #
-  # TIMEOUT
-  # Waited for over service[].timeout.target seconds and
-  # got no response but the connection is still open
-  # 
-  # CODE_403
+  # CODE_504
+  # Timeout errors, like a timeout on a socket read
+  #
   # CODE_404
   # CODE_429
   # CODE_500
-  # CODE_502
   # CODE_503
-  # CODE_504
-  # Consider that code as a retryable error
+  # ...and so on
+  # Consider that response code from the upstream as a retryable error, you can pick any code
   #
   # CODE_4XX
   # Consider any code < 500 and >= 400 to be retryable
@@ -73,15 +70,14 @@ targets = [
   # CODE_5XX
   # Consider any code >= 500 to be retryable
   #
-  # This setting defaults to ["CONNECTION_ERROR", "TIMEOUT", "CODE_5XX"]
-  retryable_errors = ["CONNECTION_ERROR", "TIMEOUT", "CODE_5XX"]
+  # This setting defaults to ["CODE_502", "CODE_503", "CODE_504"]
+  retryable_errors = ["CODE_502", "CODE_503", "CODE_504"]
 
 
 #
-# And here is the same service without the comments in case you need it :)
+# And here is a similar service without the comments in case you need it :)
 #
 [[service]]
-host    = "api2.default.svc.cluster.local"
 targets = [
   "https://www.foo.bar/api/v1",
   "https://ww2.foo.bar/api/v1",
@@ -89,8 +85,9 @@ targets = [
 ]
 
   [service.timeout]
-  target = 30
-  global = 120
+  connect = 3
+  target  = 30
+  global  = 120
 
   [service.health]
   threshold = 3
@@ -99,9 +96,9 @@ targets = [
 
   [service.retry]
   limit    = 6
-  delay    = 0
-  cooldown = 3
-  retryable_errors = ["CONNECTION_ERROR", "TIMEOUT", "CODE_5XX"]
+  delay    = 100
+  cooldown = 3000
+  retryable_errors = ["CODE_502", "CODE_503", "CODE_504"]
 
 ```
 

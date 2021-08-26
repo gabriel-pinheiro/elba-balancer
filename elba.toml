@@ -22,8 +22,9 @@ targets = [
 ]
 
   [service.timeout]
-  target = 30  # Maximum seconds to wait for a target's response, default: 30
-  global = 120 # Time limit for incoming requests, default: 120
+  connect = 3  # Maximum seconds to wait for a connection to be established, default: 3
+  target  = 30  # Maximum seconds to wait for a target's response, default: 30
+  global  = 120 # Time limit for incoming requests, default: 120
 
   [service.health]
   # Consecutive retriable errors to consider a target to be down, default: 3
@@ -79,8 +80,9 @@ targets = [
 ]
 
   [service.timeout]
-  target = 30
-  global = 120
+  connect = 3
+  target  = 30
+  global  = 120
 
   [service.health]
   threshold = 3

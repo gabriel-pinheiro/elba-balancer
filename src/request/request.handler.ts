@@ -104,6 +104,8 @@ export class RequestHandler {
             passThrough: true,
             xforward: true,
             timeout: this.upstream.config.timeout.target * 1000,
+            // @ts-ignore
+            connectTimeout: this.upstream.config.timeout.connect * 1000,
         });
 
         return response;

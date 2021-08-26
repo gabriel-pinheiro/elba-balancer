@@ -13,14 +13,17 @@ export const serverSchema = Joi.object({
 });
 
 export type ServiceTimeoutConfig = {
+    connect: number;
     target: number;
     global: number;
 };
 
 export const serviceTimeoutSchema = Joi.object({
+    connect: Joi.number().min(1).default(3),
     target: Joi.number().min(1).default(30),
     global: Joi.number().min(1).default(120),
 }).default({
+    connect: 3,
     target: 30,
     global: 120,
 });
