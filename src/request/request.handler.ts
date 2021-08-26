@@ -29,13 +29,16 @@ export class RequestHandler {
 
             // Downstream response
             if(!error) {
+                const target = this.attempts[this.attempts.length - 1].target;
                 this.logger.info(`request completed`, {
                     delay: new Date().getTime() - this.startTime.getTime(),
                     topic: 'downstream-response',
-                    target: this.attempts[this.attempts.length - 1].target,
+                    target,
                     attempt: this.attempts.length,
                 });
-                return response;
+                return response
+                        .header('X-Elba-Attempts', this.attempts.length)
+                        .header('X-Elba-Target', target);
             }
 
             // Downstream error
@@ -52,7 +55,8 @@ export class RequestHandler {
             // Retry
             this.logger.warn(`upstream request failed with error: ${error}`, {
                 delay: new Date().getTime() - this.startTime.getTime(),
-                topic: 'upstream-error'
+                topic: 'upstream-error',
+                attempt: this.attempts.length,
             });
             await this.delay();
         }

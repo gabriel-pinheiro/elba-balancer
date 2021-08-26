@@ -9,6 +9,7 @@ export class TracerPlugin implements IPlugin {
     readonly options = {
         echoHeader: true,
         requestIdFactory: this.generateId,
+        headerName: 'x-elba-id',
     };
 
     private generateId(_req: unknown): string {
