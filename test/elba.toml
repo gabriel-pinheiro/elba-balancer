@@ -22,6 +22,26 @@ targets = ["http://localhost:6625/"]
 
 
 [[service]]
+host    = "multi-target"
+targets = [
+    "http://localhost:6625/v1",
+    "http://localhost:6625/v2",
+    "http://localhost:6625/v3",
+]
+
+  [service.health]
+  threshold = 100000
+  timeout   = 1
+
+  [service.retry]
+  limit    = 2
+  delay    = 0
+  cooldown = 0
+  retryable_errors = ["CODE_503"]
+
+
+
+[[service]]
 host    = "delayed"
 targets = [
     "http://localhost:6625/v1",
@@ -72,3 +92,117 @@ targets = ["http://192.0.2.1"]
   delay    = 0
   cooldown = 0
   retryable_errors = ["CODE_5XX"]
+
+
+
+[[service]]
+host    = "balancer-1"
+targets = [
+    "http://localhost:6625/v1",
+    "http://localhost:6625/v2",
+    "http://localhost:6625/v3",
+]
+
+  [service.health]
+  threshold = 3
+  timeout   = 5
+
+  [service.retry]
+  delay    = 0
+  retryable_errors = ["CODE_503"]
+
+
+
+[[service]]
+host    = "balancer-2"
+targets = [
+    "http://localhost:6625/v1",
+    "http://localhost:6625/v2",
+    "http://localhost:6625/v3",
+]
+
+  [service.health]
+  threshold = 100
+  timeout   = 1
+
+  [service.retry]
+  delay    = 0
+  retryable_errors = ["CODE_503"]
+
+
+
+[[service]]
+host    = "balancer-3"
+targets = [
+    "http://localhost:6625/v1",
+    "http://localhost:6625/v2",
+    "http://localhost:6625/v3",
+]
+
+  [service.health]
+  threshold = 3
+  timeout   = 5
+
+  [service.retry]
+  delay    = 0
+  retryable_errors = ["CODE_503"]
+
+
+
+[[service]]
+host    = "balancer-4"
+targets = [
+    "http://localhost:6625/v1",
+    "http://localhost:6625/v2",
+    "http://localhost:6625/v3",
+]
+
+  [service.health]
+  threshold = 3
+  timeout   = 1
+
+  [service.retry]
+  delay    = 0
+  retryable_errors = ["CODE_503"]
+
+
+
+[[service]]
+host    = "balancer-5"
+targets = [
+    "http://localhost:6625/v1",
+    "http://localhost:6625/v2",
+    "http://localhost:6625/v3",
+]
+
+  [service.health]
+  threshold = 2
+  timeout   = 5
+  none_healthy_is_all_healthy = false
+
+  [service.retry]
+  limit    = 6
+  delay    = 0
+  cooldown = 0
+  retryable_errors = ["CODE_500"]
+
+
+
+[[service]]
+host    = "balancer-6"
+targets = [
+    "http://localhost:6625/v1",
+    "http://localhost:6625/v2",
+    "http://localhost:6625/v3",
+]
+
+  [service.health]
+  threshold = 2
+  timeout   = 5
+  none_healthy_is_all_healthy = true
+
+  [service.retry]
+  limit    = 6
+  delay    = 0
+  cooldown = 0
+  retryable_errors = ["CODE_500"]
