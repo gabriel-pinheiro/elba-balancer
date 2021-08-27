@@ -26,6 +26,7 @@ export class ProxyRouter implements IRouter {
                 payload: {
                     output: 'data',
                     parse: false,
+                    maxBytes: 50 * 1024 * 1024,
                 },
             },
             rules: {
