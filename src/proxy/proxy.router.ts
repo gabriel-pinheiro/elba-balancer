@@ -24,7 +24,7 @@ export class ProxyRouter implements IRouter {
             handler: (req, h) => this.service.proxy(req, h, upstream),
             config: {
                 payload: {
-                    output: 'stream',
+                    output: 'data',
                     parse: false,
                 },
             },
