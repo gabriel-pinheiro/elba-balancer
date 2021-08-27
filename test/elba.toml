@@ -1,0 +1,74 @@
+[server]
+host      = "0.0.0.0"
+port      = 8080
+verbosity = "fatal"
+
+
+
+[[service]]
+host    = "single-target"
+targets = ["http://localhost:6625/"]
+
+  [service.health]
+  threshold = 100000
+  timeout   = 1
+
+  [service.retry]
+  limit    = 2
+  delay    = 0
+  cooldown = 0
+  retryable_errors = ["CODE_503"]
+
+
+
+[[service]]
+host    = "delayed"
+targets = [
+    "http://localhost:6625/v1",
+    "http://localhost:6625/v2",
+]
+
+  [service.health]
+  threshold = 100000
+  timeout   = 1
+
+  [service.retry]
+  limit    = 3
+  delay    = 100
+  cooldown = 500
+  retryable_errors = ["CODE_503"]
+
+
+
+[[service]]
+host    = "cooldown"
+targets = ["http://localhost:6625/v1"]
+
+  [service.health]
+  threshold = 100000
+  timeout   = 1
+
+  [service.retry]
+  limit    = 3
+  delay    = 100
+  cooldown = 200
+  retryable_errors = ["CODE_503"]
+
+
+
+[[service]]
+host    = "void"
+targets = ["http://192.0.2.1"]
+
+  [service.timeout]
+  connect = 1
+
+  [service.health]
+  threshold = 100000
+  timeout   = 1
+
+  [service.retry]
+  limit    = 2
+  delay    = 0
+  cooldown = 0
+  retryable_errors = ["CODE_5XX"]

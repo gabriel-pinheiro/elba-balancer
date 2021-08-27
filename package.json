@@ -10,7 +10,9 @@
     "start:dev": "nodemon --config nodemon.json",
     "start:prod": "node dist/main",
     "pretest": "tsc",
-    "test": "lab -I require -a @hapi/code"
+    "test": "lab -v -m 4000 -I require -a @hapi/code",
+    "mocks": "mocko --watch --port 6625 ./mocks",
+    "test:mocks": "concurrently -s first -k -n \"mocko, test\" \"cross-env SILENT=true mocko --port 6625 ./mocks\" \"npm test\""
   },
   "repository": {
     "type": "git",
@@ -36,6 +38,7 @@
   "devDependencies": {
     "@hapi/code": "^8.0.3",
     "@hapi/lab": "^24.2.1",
+    "@mocko/cli": "^1.7.2",
     "@types/hapi": "^18.0.5",
     "@types/hapi__boom": "^9.0.1",
     "@types/hapi__h2o2": "^8.3.3",
@@ -43,6 +46,8 @@
     "@types/logfmt": "^1.2.2",
     "@types/node": "^15.12.4",
     "axios": "^0.21.1",
+    "concurrently": "^6.2.1",
+    "cross-env": "^7.0.3",
     "nodemon": "^2.0.7",
     "rimraf": "^3.0.2",
     "ts-node": "^10.0.0",
