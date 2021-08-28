@@ -20,16 +20,22 @@ verbosity = "info"    # Minimum verbosity to log: debug,info,warn,error,fatal
 # Only one service can have a blank host
 host    = "api.default.svc.cluster.local"
 
-targets = [
-  "https://www.foo.bar/api/v1",
-  "https://ww2.foo.bar/api/v1",
-  "https://ww3.foo.bar/api/v1"
-]
+  # These are the URLs that will be balanced
+  [[service.target]]
+  name = "instance001"                  # Alias to show in the logs and metrics
+  url  = "https://elba.mockoapp.net/s1" # URL to proxy to
+
+  [[service.target]]
+  name = "instance002"
+  url  = "https://elba.mockoapp.net/s2"
+
+  [[service.target]]
+  name = "instance003"
+  url  = "https://elba.mockoapp.net/s3"
 
   [service.timeout]
   connect = 3  # Maximum seconds to wait for a connection to be established, default: 3
   target  = 30  # Maximum seconds to wait for a target's response, default: 30
-  global  = 120 # Time limit for incoming requests, default: 120
 
   [service.health]
   # Consecutive retriable errors to consider a target to be down, default: 3
@@ -78,16 +84,22 @@ targets = [
 # And here is a similar service without the comments in case you need it :)
 #
 [[service]]
-targets = [
-  "https://www.foo.bar/api/v1",
-  "https://ww2.foo.bar/api/v1",
-  "https://ww3.foo.bar/api/v1"
-]
+
+  [[service.target]]
+  name = "instance001"
+  url  = "https://elba.mockoapp.net/s1"
+
+  [[service.target]]
+  name = "instance002"
+  url  = "https://elba.mockoapp.net/s2"
+
+  [[service.target]]
+  name = "instance003"
+  url  = "https://elba.mockoapp.net/s3"
 
   [service.timeout]
   connect = 3
   target  = 30
-  global  = 120
 
   [service.health]
   threshold = 3

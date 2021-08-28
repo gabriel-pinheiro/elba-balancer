@@ -73,7 +73,7 @@ module.exports.run = ({ it }, elba) => () => {
     it('should return the successful target in the x-elba-target header', async () => {
         const { headers } = await elba.get('/success');
         expect(headers).to.include('x-elba-target');
-        expect(headers['x-elba-target']).to.equal('http://localhost:6625/');
+        expect(headers['x-elba-target']).to.equal('mock');
     });
 
     it('should return the attempt count in the x-elba-attempts header', async () => {

@@ -17,9 +17,9 @@ module.exports.run = ({ it }, _elba) => () => {
             },
         });
 
-        const hasBalanced = () => targets.has('http://localhost:6625/v1')
-                               && targets.has('http://localhost:6625/v2')
-                               && targets.has('http://localhost:6625/v3');
+        const hasBalanced = () => targets.has('mock01')
+                               && targets.has('mock02')
+                               && targets.has('mock03');
 
         for (let i = 0; i < REQUEST_LIMIT; i++) {
             const { headers } = await multi.get('/success');

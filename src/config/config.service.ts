@@ -2,7 +2,6 @@ import * as fs from 'fs';
 import * as toml from '@iarna/toml';
 import {Provider} from "../utils/decorators/provider";
 import { Config, configSchema } from './data/config';
-import { logger } from '../utils/logger';
 
 @Provider()
 export class ConfigProvider {
@@ -18,8 +17,9 @@ export class ConfigProvider {
 
             this.config = validation.value;
         } catch (e) {
-            logger.error(`Failed to load config at ${configPath}:`);
-            logger.fatal(e);
+            console.error(`Failed to load config at ${configPath}:`);
+            console.error(e.details?.[0]?.message || e);
+            process.exit(1);
         }
     }
 

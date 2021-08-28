@@ -4,6 +4,7 @@ import * as Hoek from '@hapi/hoek';
 import { Upstream } from "../upstream/upstream";
 import { ILogger } from '../utils/logger';
 import { Attempt } from './attempt';
+import { ServiceTargetConfig } from '../config/data/config';
 
 // Loop prevention
 const HARD_LIMIT = 20;
@@ -26,20 +27,20 @@ export class RequestHandler {
             let error = null;
             const response = await this.attempt()
                     .catch(e => error = e);
-            const target = this.attempts[this.attempts.length - 1]?.target || 'elba';
+            const targetName = this.attempts[this.attempts.length - 1]?.target?.name || 'elba';
 
             // Downstream response
             if(!error && !this.mustRetryResponse(response)) {
                 this.logger.info(`request completed`, {
                     delay: new Date().getTime() - this.startTime.getTime(),
                     topic: 'downstream-response',
-                    target,
+                    target: targetName,
                     attempt: this.attempts.length,
                 });
-                this.upstream.markTargetSuccess(target);
+                this.upstream.markTargetSuccess(targetName);
                 return response
                         .header('X-Elba-Attempts', this.attempts.length)
-                        .header('X-Elba-Target', target);
+                        .header('X-Elba-Target', targetName);
             }
 
             // Downstream error (retryable or not, limit reached so we return it) or retryable response (limit reached so we return it)
@@ -47,18 +48,18 @@ export class RequestHandler {
                 this.logger.error(`downstream request failed after limit with ${error ? `error: ${error}` : `status ${response.statusCode}`}`, {
                     delay: new Date().getTime() - this.startTime.getTime(),
                     topic: 'downstream-error',
-                    target,
+                    target: targetName,
                     attempt: this.attempts.length,
                 });
 
                 if(error) {
                     if(this.mustRetryError(error)) {
-                        this.upstream.markTargetFailure(target);
+                        this.upstream.markTargetFailure(targetName);
                     }
                     throw error;
                 } else {
                     // No need to check for retry response, checked before
-                    this.upstream.markTargetFailure(target);
+                    this.upstream.markTargetFailure(targetName);
                     return response;
                 }
             }
@@ -68,7 +69,7 @@ export class RequestHandler {
                 this.logger.error(`downstream request failed with error: ${error}`, {
                     delay: new Date().getTime() - this.startTime.getTime(),
                     topic: 'downstream-error',
-                    target,
+                    target: targetName,
                     attempt: this.attempts.length,
                 });
                 throw error;
@@ -80,7 +81,7 @@ export class RequestHandler {
                 topic: 'upstream-error',
                 attempt: this.attempts.length,
             });
-            this.upstream.markTargetFailure(target);
+            this.upstream.markTargetFailure(targetName);
             await this.delay();
         }
         
@@ -93,14 +94,14 @@ export class RequestHandler {
         await this.cooldown(target);
         this.attempts.push(Attempt.of(target));
 
-        this.logger.debug(`attempting to proxy to ${target}`, {
+        this.logger.debug(`attempting to proxy to ${target.name}`, {
             attempt: this.attempts.length,
             delay: new Date().getTime() - this.startTime.getTime(),
             topic: 'upstream-request',
         });
         
         const response = await this.h.proxy({
-            uri: this.buildEntrypointPath(target) + this.req.url.search,
+            uri: this.buildEntrypointPath(target.url) + this.req.url.search,
             passThrough: true,
             xforward: true,
             timeout: this.upstream.config.timeout.target * 1000,
@@ -111,7 +112,7 @@ export class RequestHandler {
         return response;
     }
 
-    private async getSuitableTarget(): Promise<string> {
+    private async getSuitableTarget(): Promise<ServiceTargetConfig> {
         let targets = this.upstream.availableTargets;
 
         if(targets.length === 0) {
@@ -127,8 +128,8 @@ export class RequestHandler {
             }
         }
 
-        const attemptedTargets = this.attempts.map(a => a.target);
-        const unattemptedTargets = targets.filter(t => !attemptedTargets.includes(t));
+        const attemptedTargetNames = this.attempts.map(a => a.target.name);
+        const unattemptedTargets = targets.filter(t => !attemptedTargetNames.includes(t.name));
 
         // Balancing between unattempted targets
         if(unattemptedTargets.length > 0) {
@@ -136,7 +137,7 @@ export class RequestHandler {
         }
 
         // Sending request to the target that has been attempted the farthest from now
-        return targets.reduce((a, b) => attemptedTargets.lastIndexOf(a) <= attemptedTargets.lastIndexOf(b) ? a : b);
+        return targets.reduce((a, b) => attemptedTargetNames.lastIndexOf(a.name) <= attemptedTargetNames.lastIndexOf(b.name) ? a : b);
     }
 
     private mustRetryError(error: any): boolean {
@@ -175,7 +176,7 @@ export class RequestHandler {
         return false;
     }
 
-    private async cooldown(target: string): Promise<void> {
+    private async cooldown(target: ServiceTargetConfig): Promise<void> {
         if(this.upstream.config.retry.cooldown === 0) {
             return;
         }
@@ -188,11 +189,11 @@ export class RequestHandler {
         const timeSinceLastAttempt = new Date().getTime() - lastAttempt.date.getTime();
         const timeToWait = this.upstream.config.retry.cooldown - timeSinceLastAttempt;
         if(timeToWait <= 0) {
-            this.logger.debug(`attempting ${target} again without waiting because the last attempt was ${timeSinceLastAttempt}ms ago and the cooldown is ${this.upstream.config.retry.cooldown}ms`);
+            this.logger.debug(`attempting ${target.name} again without waiting because the last attempt was ${timeSinceLastAttempt}ms ago and the cooldown is ${this.upstream.config.retry.cooldown}ms`);
             return;
         }
 
-        this.logger.debug(`waiting ${timeToWait}ms before attempting ${target} again`, { topic: 'cooldown' });
+        this.logger.debug(`waiting ${timeToWait}ms before attempting ${target.name} again`, { topic: 'cooldown' });
         await Hoek.wait(timeToWait);
     }
 

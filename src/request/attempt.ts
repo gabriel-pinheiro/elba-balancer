@@ -1,10 +1,12 @@
+import { ServiceTargetConfig } from "../config/data/config";
+
 export class Attempt {
     constructor(
-        public readonly target: string,
+        public readonly target: ServiceTargetConfig,
         public readonly date: Date,
     ) { }
 
-    static of(target: string): Attempt {
+    static of(target: ServiceTargetConfig): Attempt {
         return new Attempt(target, new Date());
     }
 }

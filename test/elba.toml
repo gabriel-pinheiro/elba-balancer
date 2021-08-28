@@ -7,7 +7,10 @@ verbosity = "fatal"
 
 [[service]]
 host    = "single-target"
-targets = ["http://localhost:6625/"]
+
+  [[service.target]]
+  name = "mock"
+  url  = "http://localhost:6625/"
 
   [service.health]
   threshold = 100000
@@ -23,11 +26,18 @@ targets = ["http://localhost:6625/"]
 
 [[service]]
 host    = "multi-target"
-targets = [
-    "http://localhost:6625/v1",
-    "http://localhost:6625/v2",
-    "http://localhost:6625/v3",
-]
+
+  [[service.target]]
+  name = "mock01"
+  url  = "http://localhost:6625/v1"
+
+  [[service.target]]
+  name = "mock02"
+  url  = "http://localhost:6625/v2"
+
+  [[service.target]]
+  name = "mock03"
+  url  = "http://localhost:6625/v3"
 
   [service.health]
   threshold = 100000
@@ -43,10 +53,14 @@ targets = [
 
 [[service]]
 host    = "delayed"
-targets = [
-    "http://localhost:6625/v1",
-    "http://localhost:6625/v2",
-]
+
+  [[service.target]]
+  name = "mock01"
+  url  = "http://localhost:6625/v1"
+
+  [[service.target]]
+  name = "mock02"
+  url  = "http://localhost:6625/v2"
 
   [service.health]
   threshold = 100000
@@ -62,7 +76,10 @@ targets = [
 
 [[service]]
 host    = "cooldown"
-targets = ["http://localhost:6625/v1"]
+
+  [[service.target]]
+  name = "mock"
+  url  = "http://localhost:6625/v1"
 
   [service.health]
   threshold = 100000
@@ -78,7 +95,10 @@ targets = ["http://localhost:6625/v1"]
 
 [[service]]
 host    = "void"
-targets = ["http://192.0.2.1"]
+
+  [[service.target]]
+  name = "void"
+  url  = "http://192.0.2.1/"
 
   [service.timeout]
   connect = 1
@@ -97,11 +117,18 @@ targets = ["http://192.0.2.1"]
 
 [[service]]
 host    = "balancer-1"
-targets = [
-    "http://localhost:6625/v1",
-    "http://localhost:6625/v2",
-    "http://localhost:6625/v3",
-]
+
+  [[service.target]]
+  name = "mock01"
+  url  = "http://localhost:6625/v1"
+
+  [[service.target]]
+  name = "mock02"
+  url  = "http://localhost:6625/v2"
+
+  [[service.target]]
+  name = "mock03"
+  url  = "http://localhost:6625/v3"
 
   [service.health]
   threshold = 3
@@ -115,11 +142,18 @@ targets = [
 
 [[service]]
 host    = "balancer-2"
-targets = [
-    "http://localhost:6625/v1",
-    "http://localhost:6625/v2",
-    "http://localhost:6625/v3",
-]
+
+  [[service.target]]
+  name = "mock01"
+  url  = "http://localhost:6625/v1"
+
+  [[service.target]]
+  name = "mock02"
+  url  = "http://localhost:6625/v2"
+
+  [[service.target]]
+  name = "mock03"
+  url  = "http://localhost:6625/v3"
 
   [service.health]
   threshold = 100
@@ -133,11 +167,18 @@ targets = [
 
 [[service]]
 host    = "balancer-3"
-targets = [
-    "http://localhost:6625/v1",
-    "http://localhost:6625/v2",
-    "http://localhost:6625/v3",
-]
+
+  [[service.target]]
+  name = "mock01"
+  url  = "http://localhost:6625/v1"
+
+  [[service.target]]
+  name = "mock02"
+  url  = "http://localhost:6625/v2"
+
+  [[service.target]]
+  name = "mock03"
+  url  = "http://localhost:6625/v3"
 
   [service.health]
   threshold = 3
@@ -151,11 +192,18 @@ targets = [
 
 [[service]]
 host    = "balancer-4"
-targets = [
-    "http://localhost:6625/v1",
-    "http://localhost:6625/v2",
-    "http://localhost:6625/v3",
-]
+
+  [[service.target]]
+  name = "mock01"
+  url  = "http://localhost:6625/v1"
+
+  [[service.target]]
+  name = "mock02"
+  url  = "http://localhost:6625/v2"
+
+  [[service.target]]
+  name = "mock03"
+  url  = "http://localhost:6625/v3"
 
   [service.health]
   threshold = 3
@@ -169,11 +217,18 @@ targets = [
 
 [[service]]
 host    = "balancer-5"
-targets = [
-    "http://localhost:6625/v1",
-    "http://localhost:6625/v2",
-    "http://localhost:6625/v3",
-]
+
+  [[service.target]]
+  name = "mock01"
+  url  = "http://localhost:6625/v1"
+
+  [[service.target]]
+  name = "mock02"
+  url  = "http://localhost:6625/v2"
+
+  [[service.target]]
+  name = "mock03"
+  url  = "http://localhost:6625/v3"
 
   [service.health]
   threshold = 2
@@ -190,11 +245,18 @@ targets = [
 
 [[service]]
 host    = "balancer-6"
-targets = [
-    "http://localhost:6625/v1",
-    "http://localhost:6625/v2",
-    "http://localhost:6625/v3",
-]
+
+  [[service.target]]
+  name = "mock01"
+  url  = "http://localhost:6625/v1"
+
+  [[service.target]]
+  name = "mock02"
+  url  = "http://localhost:6625/v2"
+
+  [[service.target]]
+  name = "mock03"
+  url  = "http://localhost:6625/v3"
 
   [service.health]
   threshold = 2

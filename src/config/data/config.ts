@@ -63,9 +63,19 @@ export const serviceRetrySchema = Joi.object({
     retryable_errors: ["CODE_502", "CODE_503", "CODE_504"],
 });
 
+export type ServiceTargetConfig = {
+    name: string;
+    url: string;
+};
+
+export const serviceTargetSchema = Joi.object({
+    name: Joi.string().required(),
+    url: Joi.string().required(),
+});
+
 export type ServiceConfig = {
     host: string;
-    targets: string[];
+    target: ServiceTargetConfig[];
     timeout: ServiceTimeoutConfig;
     health: ServiceHealthConfig;
     retry: ServiceRetryConfig;
@@ -73,7 +83,7 @@ export type ServiceConfig = {
 
 export const serviceSchema = Joi.object({
     host: Joi.string().allow('').default(''),
-    targets: Joi.array().items(Joi.string()).min(1).required(),
+    target: Joi.array().items(serviceTargetSchema).min(1).required(),
     timeout: serviceTimeoutSchema,
     health: serviceHealthSchema,
     retry: serviceRetrySchema,

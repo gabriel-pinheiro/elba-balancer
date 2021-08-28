@@ -19,12 +19,14 @@ export class ElbaService {
     }
 
     private upstreamToHealth(upstream: Upstream): UpstreamHealth {
-        const healthyTargets = upstream.availableTargets;
+        const healthyTargets = upstream.availableTargets.map(t => t.name);
 
         return {
             host: upstream.config.host || '*',
             healthyTargets,
-            unhealthyTargets: upstream.targets.filter(t => !healthyTargets.includes(t)),
+            unhealthyTargets: upstream.targets
+                    .map(t => t.name)
+                    .filter(t => !healthyTargets.includes(t)),
         };
     }
 }

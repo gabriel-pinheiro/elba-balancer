@@ -1,4 +1,4 @@
-import { ServiceConfig } from "../config/data/config";
+import { ServiceConfig, ServiceTargetConfig } from "../config/data/config";
 import { ILogger } from "../utils/logger";
 
 export class Upstream {
@@ -9,48 +9,48 @@ export class Upstream {
         public readonly config: ServiceConfig,
         private readonly logger: ILogger,
     ) {
-        this.config.targets.forEach(t => this.targetConsecutiveFailures.set(t, 0));
+        this.config.target.forEach(t => this.targetConsecutiveFailures.set(t.name, 0));
     }
 
     get retryLimit(): number {
-        return this.config.retry.limit || this.config.targets.length*2;
+        return this.config.retry.limit || this.config.target.length*2;
     }
 
-    get availableTargets(): string[] {
-        return this.config.targets
+    get availableTargets(): ServiceTargetConfig[] {
+        return this.config.target
             .filter(t => this.isTargetHealhty(t));
     }
 
-    get targets(): string[] {
-        return this.config.targets;
+    get targets(): ServiceTargetConfig[] {
+        return this.config.target;
     }
 
-    markTargetSuccess(target: string): void {
-        const failures = this.targetConsecutiveFailures.get(target);
+    markTargetSuccess(targetName: string): void {
+        const failures = this.targetConsecutiveFailures.get(targetName);
         if(failures >= this.config.health.threshold) {
-            this.logger.info(`target ${target} is healthy`, { topic: 'target-health' });
+            this.logger.info(`target ${targetName} is healthy`, { topic: 'target-health' });
         }
 
-        this.targetConsecutiveFailures.set(target, 0);
+        this.targetConsecutiveFailures.set(targetName, 0);
     }
 
-    markTargetFailure(target: string): void {
-        const failures = this.targetConsecutiveFailures.get(target);
-        this.targetConsecutiveFailures.set(target, failures + 1);
-        this.targetLastFailure.set(target, new Date());
+    markTargetFailure(targetName: string): void {
+        const failures = this.targetConsecutiveFailures.get(targetName);
+        this.targetConsecutiveFailures.set(targetName, failures + 1);
+        this.targetLastFailure.set(targetName, new Date());
 
         if(failures + 1 >= this.config.health.threshold) {
-            this.logger.warn(`target ${target} is unhealthy`, { topic: 'target-health' });
+            this.logger.warn(`target ${targetName} is unhealthy`, { topic: 'target-health' });
         }
     }
 
-    private isTargetHealhty(target: string): boolean {
-        const failures = this.targetConsecutiveFailures.get(target);
+    private isTargetHealhty(target: ServiceTargetConfig): boolean {
+        const failures = this.targetConsecutiveFailures.get(target.name);
         if (failures < this.config.health.threshold) {
             return true;
         }
 
-        const lastFailure = this.targetLastFailure.get(target);
+        const lastFailure = this.targetLastFailure.get(target.name);
         const diff = new Date().getTime() - lastFailure.getTime();
 
         return diff > this.config.health.timeout * 1000;
