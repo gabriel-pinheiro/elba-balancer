@@ -1,8 +1,7 @@
 # Elba - Load balancer with retries
-Elba is an HTTP load balancer with very customizable retry options. It's ideal for integrations that aren't very stable or integrations behind VPNs or networks that aren't stable.
+Elba is a highly customizable HTTP load balancer with many retry options and exported metrics. It's ideal for integrations that aren't very stable or integrations behind VPNs or networks that aren't stable.
 
 # Settings
-```toml
 [server]
 host      = "0.0.0.0" # Interface to bind
 port      = 8080      # Port to listen
@@ -18,7 +17,7 @@ verbosity = "info"    # Minimum verbosity to log: debug,info,warn,error,fatal
 # This service will be chosen when the Host header is equal to this value
 # Leave this blank or remove it to match any host
 # Only one service can have a blank host
-host    = "api.default.svc.cluster.local"
+host = "api.default.svc.cluster.local"
 
   # These are the URLs that will be balanced
   [[service.target]]
@@ -49,7 +48,9 @@ host    = "api.default.svc.cluster.local"
   none_healthy_is_all_healthy = false
 
   [service.retry]
-  limit    = 6   # Retry amount limit, defaults to the amount of targets times two
+  # Attempts limit, defaults to the amount of targets times two. First attempt is also
+  # counted, a limit of 6 means the first attempt and five retries.
+  limit    = 6
   delay    = 100 # Millis to wait between retries, default: 100
   # Millis to wait before retrying in a target that previously failed for
   # a request, default: 3000

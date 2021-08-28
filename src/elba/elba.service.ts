@@ -1,3 +1,4 @@
+import * as Boom from "@hapi/boom";
 import { Upstream } from "../upstream/upstream";
 import { UpstreamService } from "../upstream/upstream.service";
 import { Service } from "../utils/decorators/service";
@@ -8,6 +9,10 @@ export class ElbaService {
     constructor(
         private readonly upstreamService: UpstreamService,
     ) { }
+
+    async notFound(host: string): Promise<void> {
+        throw Boom.notFound(`No service defined for host '${host}'. You can define a global service by leaving the host empty or removing it from a service's config`);
+    }
 
     async health(): Promise<ElbaHealth> {
         const upstreams = this.upstreamService.upstreams

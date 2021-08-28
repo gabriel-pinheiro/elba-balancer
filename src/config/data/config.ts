@@ -49,7 +49,7 @@ export type ServiceRetryConfig = {
 };
 
 export const serviceRetrySchema = Joi.object({
-    limit: Joi.number().min(0).optional(),
+    limit: Joi.number().min(1).optional(),
     delay: Joi.number().min(0).default(100),
     cooldown: Joi.number().min(0).default(3000),
     retryable_errors: Joi.array().items(Joi
@@ -70,7 +70,7 @@ export type ServiceTargetConfig = {
 
 export const serviceTargetSchema = Joi.object({
     name: Joi.string().required(),
-    url: Joi.string().required(),
+    url: Joi.string().uri({ scheme: ['http', 'https'] }).required(),
 });
 
 export type ServiceConfig = {

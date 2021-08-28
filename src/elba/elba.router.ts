@@ -17,6 +17,13 @@ export class ElbaRouter implements IRouter {
             rules: {
                 mapSilently: true,
             },
+        }, {
+            method: "*",
+            path: "/{any*}",
+            handler: (req, h) => this.controller.notFound(req, h),
+            rules: {
+                mapSilently: true,
+            },
         }];
     }
 }

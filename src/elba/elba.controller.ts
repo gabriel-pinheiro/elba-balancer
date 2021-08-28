@@ -11,4 +11,8 @@ export class ElbaController {
     async health(_request: Hapi.Request, _h: Hapi.ResponseToolkit) {
         return await this.service.health();
     }
+    
+    async notFound(request: Hapi.Request, _h: Hapi.ResponseToolkit) {
+        return await this.service.notFound(request.headers.host);
+    }
 }
