@@ -5,6 +5,7 @@ import { Upstream } from "../upstream/upstream";
 import { ILogger } from '../utils/logger';
 import { Attempt } from './attempt';
 import { ServiceTargetConfig } from '../config/data/config';
+import { MetricsService } from '../metrics/metrics.service';
 
 // Loop prevention
 const HARD_LIMIT = 20;
@@ -17,6 +18,7 @@ export class RequestHandler {
         private readonly req: Hapi.Request,
         private readonly h: Hapi.ResponseToolkit,
         private readonly upstream: Upstream,
+        private readonly metricsService: MetricsService,
         private readonly logger: ILogger,
     ) { }
 
@@ -37,6 +39,7 @@ export class RequestHandler {
                     target: targetName,
                     attempt: this.attempts.length,
                 });
+                this.metricsService.getDownstreamValue('downstream_success', this.upstream.config.host).add(1);
                 this.upstream.markTargetSuccess(targetName);
                 return response
                         .header('X-Elba-Attempts', this.attempts.length)
@@ -54,11 +57,15 @@ export class RequestHandler {
 
                 if(error) {
                     if(this.mustRetryError(error)) {
+                        this.metricsService.getDownstreamValue('downstream_error', this.upstream.config.host).add(1);
                         this.upstream.markTargetFailure(targetName);
+                    } else {
+                        this.metricsService.getDownstreamValue('downstream_success', this.upstream.config.host).add(1);
                     }
                     throw error;
                 } else {
                     // No need to check for retry response, checked before
+                    this.metricsService.getDownstreamValue('downstream_error', this.upstream.config.host).add(1);
                     this.upstream.markTargetFailure(targetName);
                     return response;
                 }
@@ -72,6 +79,7 @@ export class RequestHandler {
                     target: targetName,
                     attempt: this.attempts.length,
                 });
+                this.metricsService.getDownstreamValue('downstream_error', this.upstream.config.host).add(1);
                 throw error;
             }
 
@@ -86,6 +94,7 @@ export class RequestHandler {
         }
         
         // Should not happen
+        this.metricsService.getDownstreamValue('downstream_error', this.upstream.config.host).add(1);
         throw Boom.serverUnavailable('All attempts failed');
     }
 

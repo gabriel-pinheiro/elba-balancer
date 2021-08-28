@@ -6,12 +6,17 @@ const App = require('../dist/main');
 const Lab = require('@hapi/lab');
 const Axios = require('axios');
 
+const PrometheusTests = require('./unit/prometheus');
 const ProxyTests = require('./e2e/proxy');
 const RetryTests = require('./e2e/retry');
 const BalancerTests = require('./e2e/balancer');
 
 const lab = exports.lab = Lab.script();
 const { after, before, describe } = lab;
+
+describe('unit', () => {
+    describe('prometheus', PrometheusTests.run(lab));
+});
 
 describe('e2e', () => {
     let server;
@@ -33,4 +38,4 @@ describe('e2e', () => {
     describe('proxy', ProxyTests.run(lab, elba));
     describe('retry', RetryTests.run(lab, elba));
     describe('balancer', BalancerTests.run(lab, elba));
-})
+});

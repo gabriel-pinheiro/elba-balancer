@@ -1,4 +1,5 @@
 import { ServiceConfig, ServiceTargetConfig } from "../config/data/config";
+import { MetricsService } from "../metrics/metrics.service";
 import { ILogger } from "../utils/logger";
 
 export class Upstream {
@@ -7,9 +8,18 @@ export class Upstream {
 
     constructor(
         public readonly config: ServiceConfig,
+        private readonly metricsService: MetricsService,
         private readonly logger: ILogger,
     ) {
-        this.config.target.forEach(t => this.targetConsecutiveFailures.set(t.name, 0));
+        this.config.target.forEach(t => {
+            this.targetConsecutiveFailures.set(t.name, 0);
+            this.metricsService.getUpstreamValue('target_status', this.config.host, t.name).set(1);
+            this.metricsService.getUpstreamValue('upstream_success', this.config.host, t.name).set(0);
+            this.metricsService.getUpstreamValue('upstream_error', this.config.host, t.name).set(0);
+        });
+
+        this.metricsService.getDownstreamValue('downstream_success', this.config.host).set(0);
+        this.metricsService.getDownstreamValue('downstream_error', this.config.host).set(0);
     }
 
     get retryLimit(): number {
@@ -27,7 +37,9 @@ export class Upstream {
 
     markTargetSuccess(targetName: string): void {
         const failures = this.targetConsecutiveFailures.get(targetName);
+        this.metricsService.getUpstreamValue('upstream_success', this.config.host, targetName).add(1);
         if(failures >= this.config.health.threshold) {
+            this.metricsService.getUpstreamValue('target_status', this.config.host, targetName).set(1);
             this.logger.info(`target ${targetName} is healthy`, { topic: 'target-health' });
         }
 
@@ -38,8 +50,10 @@ export class Upstream {
         const failures = this.targetConsecutiveFailures.get(targetName);
         this.targetConsecutiveFailures.set(targetName, failures + 1);
         this.targetLastFailure.set(targetName, new Date());
+        this.metricsService.getUpstreamValue('upstream_error', this.config.host, targetName).add(1);
 
         if(failures + 1 >= this.config.health.threshold) {
+            this.metricsService.getUpstreamValue('target_status', this.config.host, targetName).set(0);
             this.logger.warn(`target ${targetName} is unhealthy`, { topic: 'target-health' });
         }
     }
