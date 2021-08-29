@@ -34,7 +34,7 @@ host = "api.default.svc.cluster.local"
   url  = "https://elba.mockoapp.net/s3"
 
   [service.timeout]
-  connect = 3  # Maximum seconds to wait for a connection to be established, default: 3
+  connect = 3   # Maximum seconds to wait for a connection to be established, default: 3
   target  = 30  # Maximum seconds to wait for a target's response, default: 30
 
   [service.health]
