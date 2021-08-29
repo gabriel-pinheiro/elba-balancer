@@ -116,6 +116,50 @@ host    = "void"
 
 
 [[service]]
+host    = "void-noretry"
+
+  [[service.target]]
+  name = "void"
+  url  = "http://192.0.2.1/"
+
+  [service.timeout]
+  connect = 1
+
+  [service.health]
+  threshold = 100000
+  timeout   = 1
+
+  [service.retry]
+  limit    = 2
+  delay    = 0
+  cooldown = 0
+  retryable_errors = ["CODE_500"]
+
+
+
+[[service]]
+host    = "response-retry"
+
+  [[service.target]]
+  name = "mock"
+  url  = "http://localhost:6625/"
+
+  [service.timeout]
+  connect = 1
+
+  [service.health]
+  threshold = 100000
+  timeout   = 1
+
+  [service.retry]
+  limit    = 2
+  delay    = 0
+  cooldown = 0
+  retryable_errors = ["CODE_5XX"]
+
+
+
+[[service]]
 host    = "balancer-1"
 
   [[service.target]]

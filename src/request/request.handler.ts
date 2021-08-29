@@ -42,8 +42,8 @@ export class RequestHandler {
                 this.metricsService.getDownstreamValue('downstream_success', this.upstream.config.host).add(1);
                 this.upstream.markTargetSuccess(targetName);
                 return response
-                        .header('X-Elba-Attempts', this.attempts.length)
-                        .header('X-Elba-Target', targetName);
+                        .header('x-elba-attempts', this.attempts.length)
+                        .header('x-elba-target', targetName);
             }
 
             // Downstream error (retryable or not, limit reached so we return it) or retryable response (limit reached so we return it)
@@ -62,12 +62,20 @@ export class RequestHandler {
                     } else {
                         this.metricsService.getDownstreamValue('downstream_success', this.upstream.config.host).add(1);
                     }
+
+                    if(error.isBoom) {
+                        error.output.headers['x-elba-attempts'] = this.attempts.length;
+                        error.output.headers['x-elba-target'] = targetName;
+                    }
+
                     throw error;
                 } else {
                     // No need to check for retry response, checked before
                     this.metricsService.getDownstreamValue('downstream_error', this.upstream.config.host).add(1);
                     this.upstream.markTargetFailure(targetName);
-                    return response;
+                    return response
+                        .header('x-elba-attempts', this.attempts.length)
+                        .header('x-elba-target', targetName);
                 }
             }
 
@@ -80,6 +88,12 @@ export class RequestHandler {
                     attempt: this.attempts.length,
                 });
                 this.metricsService.getDownstreamValue('downstream_error', this.upstream.config.host).add(1);
+
+                if(error.isBoom) {
+                    error.output.headers['x-elba-attempts'] = this.attempts.length;
+                    error.output.headers['x-elba-target'] = targetName;
+                }
+
                 throw error;
             }
 
