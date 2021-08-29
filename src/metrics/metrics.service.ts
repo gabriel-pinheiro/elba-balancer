@@ -32,7 +32,8 @@ export class MetricsService {
         return [...Object.values(this.downstreamMetrics), ...Object.values(this.upstreamMetrics)];
     }
 
-    getDownstreamValue(metric: DownstreamMetric, host: string): MetricValue<DownstreamLabels> {
+    getDownstreamValue(metric: DownstreamMetric, rawHost: string): MetricValue<DownstreamLabels> {
+        const host = rawHost || '*';
         const hostMap = this.getWithDefault(this.downstreamMetricValues, metric,
                 () => new Map<string, MetricValue<DownstreamLabels>>());
         const metricValue = this.getWithDefault(hostMap, host, () => this.downstreamMetrics[metric].createValue({
@@ -42,7 +43,8 @@ export class MetricsService {
         return metricValue;
     }
 
-    getUpstreamValue(metric: UpstreamMetric, host: string, target: string): MetricValue<UpstreamLabels> {
+    getUpstreamValue(metric: UpstreamMetric, rawHost: string, target: string): MetricValue<UpstreamLabels> {
+        const host = rawHost || '*';
         const hostMap = this.getWithDefault(this.upstreamMetricValues, metric,
                 () => new Map<string, Map<string, MetricValue<UpstreamLabels>>>());
         const targetMap = this.getWithDefault(hostMap, host,
