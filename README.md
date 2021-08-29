@@ -2,6 +2,7 @@
 Elba is a highly customizable HTTP load balancer with many retry options and exported metrics. It's ideal for integrations that aren't very stable or integrations behind VPNs or networks that aren't stable.
 
 # Settings
+```toml
 [server]
 host      = "0.0.0.0" # Interface to bind
 port      = 8080      # Port to listen
@@ -114,5 +115,3 @@ host = "api.default.svc.cluster.local"
   retryable_errors = ["CODE_502", "CODE_503", "CODE_504"]
 
 ```
-
-
