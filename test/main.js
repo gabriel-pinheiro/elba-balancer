@@ -6,6 +6,7 @@ const App = require('../dist/main');
 const Lab = require('@hapi/lab');
 const Axios = require('axios');
 
+const UtilsTests = require('./unit/utils');
 const PrometheusTests = require('./unit/prometheus');
 const ProxyTests = require('./e2e/proxy');
 const RetryTests = require('./e2e/retry');
@@ -15,6 +16,7 @@ const lab = exports.lab = Lab.script();
 const { after, before, describe } = lab;
 
 describe('unit', () => {
+    describe('utils', UtilsTests.run(lab));
     describe('prometheus', PrometheusTests.run(lab));
 });
 

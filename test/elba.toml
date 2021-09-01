@@ -281,7 +281,7 @@ host    = "balancer-5"
 
   [service.retry]
   limit    = 6
-  delay    = 0
+  delay    = 50
   cooldown = 0
   retryable_errors = ["CODE_500"]
 

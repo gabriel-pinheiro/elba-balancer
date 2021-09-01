@@ -120,9 +120,11 @@ module.exports.run = ({ it }, _elba) => () => {
 
         await elba.get('/fail500').catch(Hoek.ignore);
         let error;
+        const start = Date.now();
         await elba.get('/fail500').catch(e => error = e);
 
         expect(error.response.data.statusCode).to.equal(503);
+        expect(Date.now() - start).to.be.below(50); // Due to retry delay this validates there was no retry
     });
 
     it('none_healthy_is_all_healthy true should retry hosts even when all of them are down', async () => {
