@@ -6,7 +6,7 @@ Elba is a highly customizable HTTP load balancer with many retry options and exp
 [server]
 host      = "0.0.0.0" # Interface to bind
 port      = 8080      # Port to listen
-verbosity = "info"    # Minimum verbosity to log: debug,info,warn,error,fatal
+verbosity = "debug"   # Minimum verbosity to log: debug,info,warn,error,fatal
 
 
 #

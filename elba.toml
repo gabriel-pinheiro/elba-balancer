@@ -1,7 +1,7 @@
 [server]
 host      = "0.0.0.0" # Interface to bind
 port      = 8080      # Port to listen
-verbosity = "info"    # Minimum verbosity to log: debug,info,warn,error,fatal
+verbosity = "debug"   # Minimum verbosity to log: debug,info,warn,error,fatal
 
 
 #
@@ -84,7 +84,7 @@ host = "api.default.svc.cluster.local"
 
   [[service.target]]
   name = "instance001"
-  url  = "https://elba.mockoapp.net/s1"
+  url  = "https://elba.mockoapp.net/e1"
 
   [[service.target]]
   name = "instance002"
