@@ -25,33 +25,44 @@ export class RequestHandler {
     ) { }
 
     async send(): Promise<Hapi.ResponseObject> {
-        this.logger.info(`got request on ${this.req.url}`, { topic: 'downstream-request' });
+        this.onDownstreamRequest();
 
-        while(true) {
-            const target = this.getSuitableTarget();
-            await this.cooldown(target);
-            this.onUpstreamRequest(target);
-            const [error, response] = await returnError<Boom.Boom, Hapi.ResponseObject>(this.attempt(target));
+        try {
+            do {
+                var response = await this.attempt();
+            } while(!response);
 
-            const shouldRetry = this.shouldRetryStatus(response?.statusCode ?? error?.output?.statusCode ?? 502);
-
-            if(shouldRetry && !this.isRetryLimitReached()) {
-                this.onUpstreamError(error, response);
-                await this.delay();
-                continue;
-            }
-
-            if(shouldRetry) {
-                this.onDownstreamError(error, response); // Should retry but can't
-            } else {
-                this.onDownstreamResponse();             // Shouldn't retry
-            }
-
-            return this.withElbaHeaders(error ?? response);
+            return response;
+        } catch(e) {
+            this.onDownstreamError(e);
+            throw e;
         }
     }
 
-    private async attempt(target: ServiceTargetConfig): Promise<Hapi.ResponseObject> {
+    private async attempt(): Promise<null | Hapi.ResponseObject> {
+        const target = this.getSuitableTarget();
+        await this.cooldown(target);
+        this.onUpstreamRequest(target);
+        const [error, response] = await returnError<Boom.Boom, Hapi.ResponseObject>(this.sendUpstreamRequest(target));
+
+        const shouldRetry = this.shouldRetryStatus(response?.statusCode ?? error?.output?.statusCode ?? 502);
+
+        if(shouldRetry && !this.isRetryLimitReached()) {
+            this.onRetry(error, response);
+            await this.delay();
+            return null;
+        }
+
+        if(shouldRetry) {
+            this.onDownstreamError(error, response); // Should retry but can't
+        } else {
+            this.onDownstreamResponse();             // Shouldn't retry
+        }
+
+        return this.withElbaHeaders(error ?? response);
+    }
+
+    private async sendUpstreamRequest(target: ServiceTargetConfig): Promise<Hapi.ResponseObject> {
         try {
             const response = await this.h.proxy({
                 uri: this.buildEndpointPath(target.url) + this.req.url.search,
@@ -159,9 +170,8 @@ export class RequestHandler {
         return obj;
     }
 
-    private onUpstreamRequest(target: ServiceTargetConfig): void {
-        this.attempts.push(Attempt.of(target));
-        this.logStep('debug', `attempting to proxy to ${target.name}`, 'upstream-request');
+    private onDownstreamRequest(): void {
+        this.logger.info(`got request on ${this.req.url}`, { topic: 'downstream-request' });
     }
 
     private onDownstreamResponse(): void {
@@ -170,13 +180,18 @@ export class RequestHandler {
         this.upstream.markTargetSuccess(this.lastTargetName);
     }
 
-    private onDownstreamError(error: any, response: Hapi.ResponseObject): void {
+    private onDownstreamError(error: any, response?: Hapi.ResponseObject): void {
         this.logStep('error', `downstream request failed after limit with ${error ? `error: ${error}` : `status ${response.statusCode}`}`, 'downstream-error');
         this.metricsService.getDownstreamValue('downstream_error', this.upstream.config.host).add(1);
         this.upstream.markTargetFailure(this.lastTargetName);
     }
 
-    private onUpstreamError(error: any, response: Hapi.ResponseObject): void {
+    private onUpstreamRequest(target: ServiceTargetConfig): void {
+        this.attempts.push(Attempt.of(target));
+        this.logStep('debug', `attempting to proxy to ${target.name}`, 'upstream-request');
+    }
+
+    private onRetry(error: any, response: Hapi.ResponseObject): void {
         this.logStep('warn', `upstream request failed with ${error ? `error: ${error}` : `status ${response.statusCode}`}`, 'upstream-error');
         this.upstream.markTargetFailure(this.lastTargetName);
     }
