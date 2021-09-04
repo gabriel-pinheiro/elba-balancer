@@ -2,6 +2,7 @@ import * as Hapi from '@hapi/hapi';
 import * as Boom from '@hapi/boom';
 import * as Bounce from '@hapi/bounce';
 import * as Hoek from '@hapi/hoek';
+import * as Podium from '@hapi/podium';
 import { Upstream } from "../upstream/upstream";
 import { ILogger } from '../utils/logger';
 import { Attempt } from './attempt';
@@ -12,7 +13,7 @@ import { returnError } from '../utils/utils';
 const ATTEMPT_HEADER = 'x-elba-attempts';
 const TARGET_HEADER = 'x-elba-target';
 
-export class DownstreamRequestHandler {
+export class DownstreamRequestHandler extends Podium {
     private readonly attempts: Attempt[] = [];
     private readonly startTime = new Date();
 
@@ -22,10 +23,20 @@ export class DownstreamRequestHandler {
         private readonly upstream: Upstream,
         private readonly metricsService: MetricsService,
         private readonly logger: ILogger,
-    ) { }
+    ) {
+        super([
+            'downstream-request', 'downstream-response', 'downstream-error',
+            'upstream-request', 'upstream-error', // upstream-response not needed because its the same as downstream response
+        ]);
+        this.on('downstream-request', this.onDownstreamRequest.bind(this));
+        this.on('downstream-response', this.onDownstreamResponse.bind(this));
+        this.on('downstream-error', this.onDownstreamError.bind(this));
+        this.on('upstream-request', this.onUpstreamRequest.bind(this));
+        this.on('upstream-error', this.onUpstreamError.bind(this));
+    }
 
     async send(): Promise<Hapi.ResponseObject> {
-        this.onDownstreamRequest();
+        this.emit('downstream-request');
 
         try {
             do {
@@ -33,30 +44,30 @@ export class DownstreamRequestHandler {
             } while(!response);
 
             return response;
-        } catch(e) {
-            this.onDownstreamError(e);
-            throw e;
+        } catch(error) {
+            this.emit('downstream-error', { error });
+            throw error;
         }
     }
 
     private async attempt(): Promise<null | Hapi.ResponseObject> {
         const target = this.getSuitableTarget();
         await this.cooldown(target);
-        this.onUpstreamRequest(target);
+        this.emit('upstream-request', target);
         const [error, response] = await returnError<Boom.Boom, Hapi.ResponseObject>(this.sendUpstreamRequest(target));
 
         const shouldRetry = this.shouldRetryStatus(response?.statusCode ?? error?.output?.statusCode ?? 502);
 
         if(shouldRetry && !this.isRetryLimitReached()) {
-            this.onRetry(error, response);
+            this.emit('upstream-error', { error, response });
             await this.delay();
             return null;
         }
 
         if(shouldRetry) {
-            this.onDownstreamError(error, response); // Should retry but can't
+            this.emit('downstream-error', { error, response }); // Should retry but can't
         } else {
-            this.onDownstreamResponse();             // Shouldn't retry
+            this.emit('downstream-response');                   // Shouldn't retry
         }
 
         return this.withElbaHeaders(error ?? response);
@@ -180,7 +191,7 @@ export class DownstreamRequestHandler {
         this.upstream.markTargetSuccess(this.lastTargetName);
     }
 
-    private onDownstreamError(error: any, response?: Hapi.ResponseObject): void {
+    private onDownstreamError({ error, response }: { error: any, response: Hapi.ResponseObject }): void {
         this.logStep('error', `downstream request failed after limit with ${error ? `error: ${error}` : `status ${response.statusCode}`}`, 'downstream-error');
         this.metricsService.getDownstreamValue('downstream_error', this.upstream.config.host).add(1);
         this.upstream.markTargetFailure(this.lastTargetName);
@@ -191,7 +202,7 @@ export class DownstreamRequestHandler {
         this.logStep('debug', `attempting to proxy to ${target.name}`, 'upstream-request');
     }
 
-    private onRetry(error: any, response: Hapi.ResponseObject): void {
+    private onUpstreamError({ error, response }: { error: any, response: Hapi.ResponseObject }): void {
         this.logStep('warn', `upstream request failed with ${error ? `error: ${error}` : `status ${response.statusCode}`}`, 'upstream-error');
         this.upstream.markTargetFailure(this.lastTargetName);
     }
