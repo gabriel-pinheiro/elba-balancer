@@ -3,6 +3,7 @@ export type Labels = Record<string, string>;
 
 export class MetricValue<T extends Labels> {
     constructor(
+        public readonly metric: Metric<T>,
         public value: number,
         public readonly labels: T,
     ) { }
@@ -28,7 +29,7 @@ export class Metric<T extends Labels> {
     ) { }
 
     createValue(labels: T, value = NaN): MetricValue<T> {
-        const metricValue = new MetricValue(value, labels);
+        const metricValue = new MetricValue(this, value, labels);
         this.values.push(metricValue);
 
         return metricValue;

@@ -1,6 +1,8 @@
 import { Service } from "../utils/decorators/service";
 import { Counter, Gauge, Metric, MetricValue } from "../utils/prometheus";
 import { DownstreamLabels, UpstreamLabels } from "./data/labels";
+import { performance } from "perf_hooks";
+import { memoryUsage } from "process";
 
 export type UpstreamMetric = 'upstream_success' | 'upstream_error' | 'target_status';
 export type DownstreamMetric = 'downstream_success' | 'downstream_error';
@@ -21,6 +23,12 @@ export class MetricsService {
         target_status: new Gauge<UpstreamLabels>('target_status',
             'Status of upstream targets. 0 is down, 1 is up'),
     };
+    private readonly eventLoopActive = new Counter('event_loop_active', 'Number of milliseconds the event loop was active').createValue({});
+    private readonly eventLoopIdle = new Counter('event_loop_idle', 'Number of milliseconds the event loop was idle').createValue({});
+    private readonly memoryMetric = new Gauge('memory_usage', 'Memory usage in bytes');
+    private readonly memoryHeapTotal = this.memoryMetric.createValue({type: 'heap_total'});
+    private readonly memoryHeapUsed = this.memoryMetric.createValue({type: 'heap_used'});
+    private readonly memoryRss = this.memoryMetric.createValue({type: 'rss'});
 
 
     private readonly downstreamMetricValues: Map<DownstreamMetric,
@@ -29,7 +37,14 @@ export class MetricsService {
             Map<string, Map<string, MetricValue<UpstreamLabels>>>> = new Map();
 
     async getMetrics(): Promise<Metric<any>[]> {
-        return [...Object.values(this.downstreamMetrics), ...Object.values(this.upstreamMetrics)];
+        await this.updatePerformanceMetrics();
+        return [
+            ...Object.values(this.downstreamMetrics),
+            ...Object.values(this.upstreamMetrics),
+            this.eventLoopActive.metric,
+            this.eventLoopIdle.metric,
+            this.memoryMetric,
+        ];
     }
 
     getDownstreamValue(metric: DownstreamMetric, rawHost: string): MetricValue<DownstreamLabels> {
@@ -65,5 +80,16 @@ export class MetricsService {
         const defaultValue = defaultValueFactory();
         map.set(key, defaultValue);
         return defaultValue;
+    }
+
+    private async updatePerformanceMetrics(): Promise<void> {
+        const { active, idle } = performance.eventLoopUtilization();
+        this.eventLoopActive.set(active);
+        this.eventLoopIdle.set(idle);
+
+        const { rss, heapTotal, heapUsed } = memoryUsage();
+        this.memoryHeapTotal.set(heapTotal);
+        this.memoryHeapUsed.set(heapUsed);
+        this.memoryRss.set(rss);
     }
 }
