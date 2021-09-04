@@ -12,7 +12,7 @@ import { returnError } from '../utils/utils';
 const ATTEMPT_HEADER = 'x-elba-attempts';
 const TARGET_HEADER = 'x-elba-target';
 
-export class RequestHandler {
+export class DownstreamRequestHandler {
     private readonly attempts: Attempt[] = [];
     private readonly startTime = new Date();
 

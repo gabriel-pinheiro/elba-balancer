@@ -1,7 +1,7 @@
 import * as Hapi from '@hapi/hapi';
 import { inject } from 'inversify';
 import { MetricsService } from '../metrics/metrics.service';
-import { RequestHandler } from '../request/request.handler';
+import { DownstreamRequestHandler } from '../request/downstream-request.handler';
 import { Upstream } from '../upstream/upstream';
 import { Service } from '../utils/decorators/service';
 import { ILogger, Logger } from '../utils/logger';
@@ -17,7 +17,7 @@ export class ProxyService {
     async proxy(req: Hapi.Request,
                 h: Hapi.ResponseToolkit,
                 upstream: Upstream): Promise<Hapi.ResponseObject> {
-        const request = new RequestHandler(req, h, upstream, this.metricsService, this.logger);
+        const request = new DownstreamRequestHandler(req, h, upstream, this.metricsService, this.logger);
         return await request.send();
     }
 }
