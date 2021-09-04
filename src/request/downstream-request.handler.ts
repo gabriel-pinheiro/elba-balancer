@@ -9,30 +9,31 @@ import { Attempt } from './attempt';
 import { ServiceTargetConfig } from '../config/data/config';
 import { MetricsService } from '../metrics/metrics.service';
 import { returnError } from '../utils/utils';
+import { logSteps } from './decorators/log-steps.decorator';
+import { trackHealth } from './decorators/track-health.decorator';
+import { trackMetrics } from './decorators/track-metrics.decorator';
 
 const ATTEMPT_HEADER = 'x-elba-attempts';
 const TARGET_HEADER = 'x-elba-target';
 
+@logSteps
+@trackHealth
+@trackMetrics
 export class DownstreamRequestHandler extends Podium {
-    private readonly attempts: Attempt[] = [];
-    private readonly startTime = new Date();
+    protected readonly attempts: Attempt[] = [];
+    protected readonly startTime = new Date();
 
     constructor(
-        private readonly req: Hapi.Request,
+        protected readonly req: Hapi.Request,
         private readonly h: Hapi.ResponseToolkit,
-        private readonly upstream: Upstream,
-        private readonly metricsService: MetricsService,
-        private readonly logger: ILogger,
+        protected readonly upstream: Upstream,
+        protected readonly metricsService: MetricsService,
+        protected readonly logger: ILogger,
     ) {
         super([
             'downstream-request', 'downstream-response', 'downstream-error',
             'upstream-request', 'upstream-error', // upstream-response not needed because its the same as downstream response
         ]);
-        this.on('downstream-request', this.onDownstreamRequest.bind(this));
-        this.on('downstream-response', this.onDownstreamResponse.bind(this));
-        this.on('downstream-error', this.onDownstreamError.bind(this));
-        this.on('upstream-request', this.onUpstreamRequest.bind(this));
-        this.on('upstream-error', this.onUpstreamError.bind(this));
     }
 
     async send(): Promise<Hapi.ResponseObject> {
@@ -53,6 +54,7 @@ export class DownstreamRequestHandler extends Podium {
     private async attempt(): Promise<null | Hapi.ResponseObject> {
         const target = this.getSuitableTarget();
         await this.cooldown(target);
+        this.attempts.push(Attempt.of(target));
         this.emit('upstream-request', target);
         const [error, response] = await returnError<Boom.Boom, Hapi.ResponseObject>(this.sendUpstreamRequest(target));
 
@@ -181,42 +183,7 @@ export class DownstreamRequestHandler extends Podium {
         return obj;
     }
 
-    private onDownstreamRequest(): void {
-        this.logger.info(`got request on ${this.req.url}`, { topic: 'downstream-request' });
-    }
-
-    private onDownstreamResponse(): void {
-        this.logStep('info', 'request completed', 'downstream-response');
-        this.metricsService.getDownstreamValue('downstream_success', this.upstream.config.host).add(1);
-        this.upstream.markTargetSuccess(this.lastTargetName);
-    }
-
-    private onDownstreamError({ error, response }: { error: any, response: Hapi.ResponseObject }): void {
-        this.logStep('error', `downstream request failed after limit with ${error ? `error: ${error}` : `status ${response.statusCode}`}`, 'downstream-error');
-        this.metricsService.getDownstreamValue('downstream_error', this.upstream.config.host).add(1);
-        this.upstream.markTargetFailure(this.lastTargetName);
-    }
-
-    private onUpstreamRequest(target: ServiceTargetConfig): void {
-        this.attempts.push(Attempt.of(target));
-        this.logStep('debug', `attempting to proxy to ${target.name}`, 'upstream-request');
-    }
-
-    private onUpstreamError({ error, response }: { error: any, response: Hapi.ResponseObject }): void {
-        this.logStep('warn', `upstream request failed with ${error ? `error: ${error}` : `status ${response.statusCode}`}`, 'upstream-error');
-        this.upstream.markTargetFailure(this.lastTargetName);
-    }
-
-    private logStep(severity: 'debug' | 'info' | 'warn' | 'error', message: string, topic: string) {
-        this.logger[severity](message, {
-            delay: new Date().getTime() - this.startTime.getTime(),
-            topic,
-            target: this.lastTargetName,
-            attempt: this.attempts.length,
-        });
-    }
-
-    private get lastTargetName(): string {
+    protected get lastTargetName(): string {
         return this.attempts[this.attempts.length - 1]?.target?.name || 'elba';
     }
 

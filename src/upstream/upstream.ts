@@ -37,7 +37,6 @@ export class Upstream {
 
     markTargetSuccess(targetName: string): void {
         const failures = this.targetConsecutiveFailures.get(targetName);
-        this.metricsService.getUpstreamValue('upstream_success', this.config.host, targetName).add(1);
         if(failures >= this.config.health.threshold) {
             this.metricsService.getUpstreamValue('target_status', this.config.host, targetName).set(1);
             this.logger.info(`target ${targetName} is healthy`, { topic: 'target-health' });
@@ -50,7 +49,6 @@ export class Upstream {
         const failures = this.targetConsecutiveFailures.get(targetName);
         this.targetConsecutiveFailures.set(targetName, failures + 1);
         this.targetLastFailure.set(targetName, new Date());
-        this.metricsService.getUpstreamValue('upstream_error', this.config.host, targetName).add(1);
 
         if(failures + 1 >= this.config.health.threshold) {
             this.metricsService.getUpstreamValue('target_status', this.config.host, targetName).set(0);
