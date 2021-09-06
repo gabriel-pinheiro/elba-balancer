@@ -11,9 +11,8 @@ verbosity = "debug"   # Minimum verbosity to log: debug,info,warn,error,fatal
 #
 [[service]]
 # This service will be chosen when the Host header is equal to this value
-# Leave this blank or remove it to match any host
-# Only one service can have a blank host
-host = "api.default.svc.cluster.local"
+# Leave this blank or remove/comment it to match any host:
+# host = "api.default.svc.cluster.local"
 
   # These are the URLs that will be balanced
   [[service.target]]
@@ -76,35 +75,6 @@ host = "api.default.svc.cluster.local"
   # This setting defaults to ["CODE_502", "CODE_503", "CODE_504"]
   retryable_errors = ["CODE_502", "CODE_503", "CODE_504"]
 
-
 #
-# And here is a similar service without the comments in case you need it :)
+# You can define more services by repeating the above section from [[service]] to the end
 #
-[[service]]
-
-  [[service.target]]
-  name = "instance001"
-  url  = "https://elba.mockoapp.net/s1"
-
-  [[service.target]]
-  name = "instance002"
-  url  = "https://elba.mockoapp.net/s2"
-
-  [[service.target]]
-  name = "instance003"
-  url  = "https://elba.mockoapp.net/s3"
-
-  [service.timeout]
-  connect = 3
-  target  = 30
-
-  [service.health]
-  threshold = 3
-  timeout   = 10
-  none_healthy_is_all_healthy = false
-
-  [service.retry]
-  limit    = 6
-  delay    = 100
-  cooldown = 3000
-  retryable_errors = ["CODE_502", "CODE_503", "CODE_504"]
