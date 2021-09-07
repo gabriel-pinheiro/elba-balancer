@@ -1,7 +1,45 @@
 # Elba - Load balancer with retries
 Elba is a highly customizable HTTP load balancer with many retry options and exported metrics. It's ideal for integrations that aren't very stable or integrations behind VPNs or networks that aren't stable.
 
-# Settings
+## Installation
+
+### Using Docker
+First download [the default configuration file](https://raw.githubusercontent.com/gabriel-pinheiro/elba-balancer/main/elba.toml):
+```shell
+$ wget https://raw.githubusercontent.com/gabriel-pinheiro/elba-balancer/main/elba.toml
+```
+
+Now run elba's Docker image with the configuration file:
+```shell
+$ docker run -v /path/to/elba.toml:/etc/elba/elba.toml -p 8080:8080 -d gabrielctpinheiro/elba
+```
+
+And that's it! Elba is now running on port 8080:
+```shell
+$ curl http://localhost:8080/
+
+{
+  "message": "Hello from instance 03!"
+}
+```
+
+### Using Helm
+First pull the chart to your machine so you can edit the configuration file:
+```shell
+$ helm repo add elba https://cdn.codetunnel.net/elba
+$ helm pull elba/elba
+$ tar xzf elba*.tgz
+$ cd elba
+```
+
+Edit the file `elba.toml` and install it:
+```shell
+$ helm install elba ./
+```
+
+## Settings
+These are the supported options for your `elba.toml` configuration file:
+
 ```toml
 [server]
 host      = "0.0.0.0" # Interface to bind
@@ -84,4 +122,116 @@ verbosity = "debug"   # Minimum verbosity to log: debug,info,warn,error,fatal
 # You can define more services by repeating the above section from [[service]] to the end
 #
 
+```
+
+## Healthcheck
+Elba has a built-in healthcheck endpoint that can be used to check if it's running:
+```shell
+$ curl http://localhost:8080/__elba__/health
+
+{
+  "status": "ok",
+  "upstreams": [
+    {
+      "host": "api.default.svc.cluster.local",
+      "healthyTargets": [
+        "instance001",
+        "instance002",
+        "instance003"
+      ],
+      "unhealthyTargets": []
+    },
+    {
+      "host": "*",
+      "healthyTargets": [
+        "instance001",
+        "instance002",
+        "instance003"
+      ],
+      "unhealthyTargets": []
+    }
+  ]
+}
+```
+
+## Prometheus metrics
+Elba exposes Prometheus metrics on `/__elba__/metrics`
+```shell
+$ curl http://localhost:8080/__elba__/metrics
+
+# HELP downstream_success Successfully proxied responses from elba to downstream
+# TYPE downstream_success counter
+downstream_success{service="api.default.svc.cluster.local"} 0
+downstream_success{service="*"} 0
+# HELP downstream_error Proxy error responses from elba to downstream
+# TYPE downstream_error counter
+downstream_error{service="api.default.svc.cluster.local"} 0
+downstream_error{service="*"} 0
+# HELP upstream_success 2XX or non-retriable errors from upstream to elba
+# TYPE upstream_success counter
+upstream_success{service="api.default.svc.cluster.local",target="instance001"} 0
+upstream_success{service="api.default.svc.cluster.local",target="instance002"} 0
+upstream_success{service="api.default.svc.cluster.local",target="instance003"} 0
+upstream_success{service="*",target="instance001"} 0
+upstream_success{service="*",target="instance002"} 0
+upstream_success{service="*",target="instance003"} 0
+# HELP upstream_error Retriable errors from upstream to elba
+# TYPE upstream_error counter
+upstream_error{service="api.default.svc.cluster.local",target="instance001"} 0
+upstream_error{service="api.default.svc.cluster.local",target="instance002"} 0
+upstream_error{service="api.default.svc.cluster.local",target="instance003"} 0
+upstream_error{service="*",target="instance001"} 0
+upstream_error{service="*",target="instance002"} 0
+upstream_error{service="*",target="instance003"} 0
+# HELP target_status Status of upstream targets. 0 is down, 1 is up
+# TYPE target_status gauge
+target_status{service="api.default.svc.cluster.local",target="instance001"} 1
+target_status{service="api.default.svc.cluster.local",target="instance002"} 1
+target_status{service="api.default.svc.cluster.local",target="instance003"} 1
+target_status{service="*",target="instance001"} 1
+target_status{service="*",target="instance002"} 1
+target_status{service="*",target="instance003"} 1
+# HELP event_loop_active Number of milliseconds the event loop was active
+# TYPE event_loop_active counter
+event_loop_active{} 84.89516399976128
+# HELP event_loop_idle Number of milliseconds the event loop was idle
+# TYPE event_loop_idle counter
+event_loop_idle{} 59451.823004
+# HELP memory_usage Memory usage in bytes
+# TYPE memory_usage gauge
+memory_usage{type="heap_total"} 13766656
+memory_usage{type="heap_used"} 11503048
+memory_usage{type="rss"} 56487936
+```
+
+
+Here are some examples of how to query the metrics:
+Which targets are healthy for a service:
+```promql
+min(target_status{service="$service"}) by (target)
+```
+
+Number of successful requests per minute to each target:
+```promql
+sum(rate(upstream_success{service="$service"}[$__interval])*60) by (target)
+```
+
+Number of failed requests per minute to each target:
+```promql
+sum(rate(upstream_error{service="$service"}[$__interval])*60) by (target)
+```
+
+Number of failed downstream requests per minute:
+```promql
+sum(rate(downstream_error{service="$service"}[$__interval])*60) by (service)
+```
+
+Memory usage:
+```promql
+memory_usage
+```
+
+Elba load percentage (event loop usage):
+```promql
+100 * rate(event_loop_active[$__interval]) / (rate(event_loop_active[$__interval]) + rate(event_loop_idle[$__interval]))
 ```
