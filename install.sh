@@ -94,6 +94,8 @@ printf "$CMD_STR$SPACE_SUDO journalctl -u elba\n\n"
 printf "Test it with:\n"
 printf "$CMD_STR curl http://localhost:8080\n\n"
 
-printf "And edit its configuration on /etc/elba/elba.toml\n\n\n"
+printf "And after editing its configuration on /etc/elba/elba.toml restart it with:\n"
+printf "$CMD_STR$SPACE_SUDO systemctl restart elba\n\n\n"
+
 
 printf "Enjoy!! :)\n"
