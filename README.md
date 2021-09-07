@@ -131,6 +131,37 @@ verbosity = "debug"   # Minimum verbosity to log: debug,info,warn,error,fatal
 
 ```
 
+## X-Elba headers
+Elba will add the following headers to the response:
+- `X-Elba-Target`: The target that was chosen to respond to the request
+- `X-Elba-Attempts`: The amount of attempts that were made to reach the target
+- `X-Elba-Id`: The ID of the request, all the logs related to it will have a `trace=<id>`. Logs not related to a request will have a `trace=000000000000` tag.
+
+## Load balancing
+- Targets are chosen at random at upstream-request time.
+- Targets that are marked as down are skipped unless all of them are down and `service.health.none_healthy_is_all_healthy` is set to true.
+- If `service.health.none_healthy_is_all_healthy` is set to false, the request will fail with 503.
+- `service.timeout.connect` is the maximum amount of time to wait for a connection to be established.
+- `service.timeout.target` is the maximum amount of time to wait for a target's response.
+
+## Retries
+- `service.retry.delay` is the amount of time to wait between retries.
+- `service.retry.limit` is the maximum amount of retries before failing with the last error.
+- `service.retry.cooldown` is the amount of time wanted before retrying in a target that previously failed for that request. A cooldown of 3000 doesn't mean that extra 3 seconds will be waited, but that the time between the last retry and the next one will be at least 3000 millis.
+- An upstream request is considered failed if the response code is not in the list of `retryable_errors`.
+- Failed requests are retried until `service.retry.limit` is reached, until all targets are down (if `service.health.none_healthy_is_all_healthy` is set to false), until a successful response is received, or until the request is aborted by the client.
+- For chosing an available target, the following algorithm is used:
+  - If there are healthy targets not chosen yet for the current downstream request, a random one is chosen.
+  - If all healthy targets were already attempted for the current downstream request, the one that has been attempted the farthest from now is chosen.
+  - If all targets are down and `service.health.none_healthy_is_all_healthy` is set to true, the same two rules above are applied for all targets.
+  - These rules are evaluated at upstream-request time.
+
+## Health
+- If a target reaches `service.health.threshold` **consecutive** failed requests, it is marked as unhealthy.
+- Unhealthy targets stop receiving requests for `service.health.timeout` seconds.
+- After `service.health.timeout` seconds, a target receives (most likely) one request and is marked as UP if the response is successful or continues to be down if the response is not successful.
+- (most likely because until the response, the target is considered up and might get more requests in scenarios of high request rates)
+
 ## Healthcheck
 Elba has a built-in healthcheck endpoint that can be used to check if it's running:
 ```shell
