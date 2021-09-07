@@ -2,6 +2,13 @@
 Elba is a highly customizable HTTP load balancer with many retry options and exported metrics. It's ideal for integrations that aren't very stable or integrations behind VPNs or networks that aren't stable.
 
 ## Installation
+### Linux
+To install Elba on Linux, run the following command:
+```shell
+$ curl -sfL https://cdt.one/elba.sh | sh -
+```
+
+It'll create Elba's service, start and enable it.
 
 ### Using Docker
 First download [the default configuration file](https://raw.githubusercontent.com/gabriel-pinheiro/elba-balancer/main/elba.toml):
