@@ -75,6 +75,7 @@ export const serviceTargetSchema = Joi.object({
 
 export type ServiceConfig = {
     host: string;
+    proxy_host: boolean;
     target: ServiceTargetConfig[];
     timeout: ServiceTimeoutConfig;
     health: ServiceHealthConfig;
@@ -83,6 +84,7 @@ export type ServiceConfig = {
 
 export const serviceSchema = Joi.object({
     host: Joi.string().allow('').default(''),
+    proxy_host: Joi.boolean().default(false),
     target: Joi.array().items(serviceTargetSchema).min(1).required(),
     timeout: serviceTimeoutSchema,
     health: serviceHealthSchema,

@@ -45,3 +45,7 @@ mock "GET /return-header" {
     X-Foo = "bar"
   }
 }
+
+mock "GET /return-host" {
+  body = "{{ request.headers.host }}"
+}

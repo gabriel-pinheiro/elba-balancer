@@ -79,6 +79,8 @@ export class DownstreamRequestHandler extends Podium {
         try {
             const response = await this.h.proxy({
                 uri: this.buildEndpointPath(target.url) + this.req.url.search,
+                // @ts-ignore
+                proxyHost: this.upstream.config.proxy_host,
                 passThrough: true,
                 xforward: true,
                 timeout: this.upstream.config.timeout.target * 1000,

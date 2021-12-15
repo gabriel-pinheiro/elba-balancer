@@ -160,6 +160,16 @@ host    = "response-retry"
 
 
 [[service]]
+host       = "proxy-host"
+proxy_host = true
+
+  [[service.target]]
+  name = "mock"
+  url  = "http://localhost:6625/"
+
+
+
+[[service]]
 host    = "balancer-1"
 
   [[service.target]]

@@ -3,4 +3,4 @@ name: elba
 description: Load balancer with retries
 type: application
 version: 1.0.0
-appVersion: "1.0.0"
+appVersion: "1.2.0"

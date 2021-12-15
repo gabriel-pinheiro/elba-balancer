@@ -34,7 +34,7 @@
     "@hapi/hapi": "^20.1.4",
     "@hapi/podium": "^4.1.3",
     "@iarna/toml": "^2.2.5",
-    "@mocko/h2o2": "^9.1.0",
+    "@mocko/h2o2": "^9.2.0",
     "cls-rtracer": "^2.6.0",
     "inversify": "^5.1.1",
     "joi": "^17.4.2",

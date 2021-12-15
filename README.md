@@ -60,9 +60,13 @@ verbosity = "debug"   # Minimum verbosity to log: debug,info,warn,error,fatal
 # anything else)
 #
 [[service]]
-# This service will be chosen when the Host header is equal to this value
-# Leave this blank or remove/comment it to match any host:
+## This service will be chosen when the Host header is equal to this value
+## Leave this blank or remove/comment it to match any host:
 # host = "api.default.svc.cluster.local"
+
+## The default is to set the upstream Host header from its URL, if you want to
+## proxy the Host header from the downstream request, uncomment this line:
+# proxy_host = true
 
   # These are the URLs that will be balanced
   [[service.target]]
