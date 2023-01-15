@@ -209,6 +209,14 @@ downstream_success{service="*"} 0
 # TYPE downstream_error counter
 downstream_error{service="api.default.svc.cluster.local"} 0
 downstream_error{service="*"} 0
+# HELP targets_up Shows how many targets for each service are up
+# TYPE targets_up gauge
+targets_up{service="api.default.svc.cluster.local"} 0
+targets_up{service="*"} 0
+# HELP targets_down Shows how many targets for each service are down
+# TYPE targets_down gauge
+targets_down{service="api.default.svc.cluster.local"} 3
+targets_down{service="*"} 3
 # HELP upstream_success 2XX or non-retriable errors from upstream to elba
 # TYPE upstream_success counter
 upstream_success{service="api.default.svc.cluster.local",target="instance001"} 0
@@ -233,6 +241,14 @@ target_status{service="api.default.svc.cluster.local",target="instance003"} 1
 target_status{service="*",target="instance001"} 1
 target_status{service="*",target="instance002"} 1
 target_status{service="*",target="instance003"} 1
+# HELP elba_downstream_request_duration_seconds_bucket Number of responses that took less than "le" seconds
+# TYPE elba_downstream_request_duration_seconds_bucket counter
+elba_downstream_request_duration_seconds_bucket{service="api.default.svc.cluster.local",le="000.64"} 0
+elba_downstream_request_duration_seconds_bucket{service="api.default.svc.cluster.local",le="001.28"} 0
+elba_downstream_request_duration_seconds_bucket{service="api.default.svc.cluster.local",le="002.56"} 0
+elba_downstream_request_duration_seconds_bucket{service="*",le="000.64"} 0
+elba_downstream_request_duration_seconds_bucket{service="*",le="001.28"} 0
+elba_downstream_request_duration_seconds_bucket{service="*",le="002.56"} 0
 # HELP event_loop_active Number of milliseconds the event loop was active
 # TYPE event_loop_active counter
 event_loop_active{} 84.89516399976128
@@ -276,4 +292,9 @@ memory_usage
 Elba load percentage (event loop usage):
 ```promql
 100 * rate(event_loop_active[$__interval]) / (rate(event_loop_active[$__interval]) + rate(event_loop_idle[$__interval]))
+```
+
+Heatmap of request duration:
+```promql
+sum (increase(elba_downstream_request_duration_seconds_bucket[$__interval])) by (le) / ignoring(le) group_left sum(increase(downstream_success[$__interval]))
 ```
