@@ -15,7 +15,10 @@ export function logSteps<C extends { new (...args: any[]): DownstreamRequestHand
         }
 
         private _logSteps_onDownstreamRequest(): void {
-            this.logger.info(`got request on ${this.req.url}`, { topic: 'downstream-request' });
+            this.logger.info(`got request on ${this.req.url}`, {
+                topic: 'downstream-request',
+                service: this.upstream.config.host || '*',
+            });
         }
 
         private _logSteps_onDownstreamResponse(): void {
