@@ -1,0 +1,53 @@
+name: Tests
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+      - actions
+
+jobs:
+  test-node-14:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      name: Repository checkout
+    - uses: actions/setup-node@v2
+      name: Node 14 Setup
+      with:
+        node-version: '14'
+    - name: Install dependencies
+      run: npm install
+    - name: Build and test
+      run: npm run test:mocks
+
+  test-node-16:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      name: Repository checkout
+    - uses: actions/setup-node@v2
+      name: Node 16 Setup
+      with:
+        node-version: '16'
+    - name: Install dependencies
+      run: npm install
+    - name: Build and test
+      run: npm run test:mocks
+
+  test-node-18:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      name: Repository checkout
+    - uses: actions/setup-node@v2
+      name: Node 18 Setup
+      with:
+        node-version: '18'
+    - name: Install dependencies
+      run: npm install
+    - name: Build and test
+      run: npm run test:mocks
