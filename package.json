@@ -9,8 +9,8 @@
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "tsc",
-    "package": "pkg --compress GZip --targets node19-linux --output bin/elba .",
-    "package:arm": "pkg --compress GZip --targets node19-linux-arm64 --output bin/elba .",
+    "package": "pkg --compress GZip --targets node18-linux --output bin/elba .",
+    "package:arm": "pkg --compress GZip --targets node18-linux-arm64 --output bin/elba .",
     "start": "node dist/main",
     "start:dev": "nodemon --config nodemon.json",
     "start:prod": "node dist/main",
