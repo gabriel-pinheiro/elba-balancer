@@ -5,7 +5,8 @@ import { performance } from "perf_hooks";
 import { memoryUsage } from "process";
 
 export type UpstreamMetric = 'upstream_success' | 'upstream_error' | 'target_status';
-export type DownstreamMetric = 'downstream_success' | 'downstream_error';
+export type DownstreamMetric = 'downstream_success' | 'downstream_error' |
+    'targets_up' | 'targets_down';
 
 @Service()
 export class MetricsService {
@@ -14,6 +15,10 @@ export class MetricsService {
             'downstream_success', 'Successfully proxied responses from elba to downstream'),
         downstream_error: new Counter<DownstreamLabels>(
             'downstream_error', 'Proxy error responses from elba to downstream'),
+        targets_up: new Gauge<DownstreamLabels>('targets_up',
+            'Shows how many targets for each service are up'),
+        targets_down: new Gauge<DownstreamLabels>('targets_down',
+            'Shows how many targets for each service are down'),
     };
     private readonly upstreamMetrics: Record<UpstreamMetric, Metric<UpstreamLabels>> = {
         upstream_success: new Counter<UpstreamLabels>(

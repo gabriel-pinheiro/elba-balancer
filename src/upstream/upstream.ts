@@ -20,6 +20,8 @@ export class Upstream {
 
         this.metricsService.getDownstreamValue('downstream_success', this.config.host).set(0);
         this.metricsService.getDownstreamValue('downstream_error', this.config.host).set(0);
+        this.metricsService.getDownstreamValue('targets_up', this.config.host).set(this.config.target.length);
+        this.metricsService.getDownstreamValue('targets_down', this.config.host).set(0);
     }
 
     get retryLimit(): number {
@@ -39,6 +41,7 @@ export class Upstream {
         const failures = this.targetConsecutiveFailures.get(targetName);
         if(failures >= this.config.health.threshold) {
             this.metricsService.getUpstreamValue('target_status', this.config.host, targetName).set(1);
+            this.updateTargetMetrics();
             this.logger.info(`target ${targetName} is healthy`, { topic: 'target-health' });
         }
 
@@ -52,8 +55,21 @@ export class Upstream {
 
         if(failures + 1 >= this.config.health.threshold) {
             this.metricsService.getUpstreamValue('target_status', this.config.host, targetName).set(0);
+            this.updateTargetMetrics();
             this.logger.warn(`target ${targetName} is unhealthy`, { topic: 'target-health' });
         }
+    }
+
+    private updateTargetMetrics(): void {
+        const totalTargets = this.config.target.length;
+        const upTargets = this.config.target
+            .map(t => this.isTargetHealhty(t))
+            .filter(isHealthy => isHealthy === true)
+            .length;
+        const downTargets = totalTargets - upTargets;
+
+        this.metricsService.getDownstreamValue('targets_up', this.config.host).set(upTargets);
+        this.metricsService.getDownstreamValue('targets_down', this.config.host).set(downTargets);
     }
 
     private isTargetHealhty(target: ServiceTargetConfig): boolean {
