@@ -1,6 +1,6 @@
 import { Service } from "../utils/decorators/service";
 import { Counter, Gauge, Metric, MetricValue } from "../utils/prometheus";
-import { DownstreamLabels, UpstreamLabels } from "./data/labels";
+import { DownstreamLatencyLabels, DownstreamLabels, UpstreamLabels } from "./data/labels";
 import { performance } from "perf_hooks";
 import { memoryUsage } from "process";
 
@@ -28,6 +28,7 @@ export class MetricsService {
         target_status: new Gauge<UpstreamLabels>('target_status',
             'Status of upstream targets. 0 is down, 1 is up'),
     };
+    private readonly downstreamLatencyMetric = new Counter<DownstreamLatencyLabels>('downstream_latency', 'Number of responses (success) with less than "latency" ms');
     private readonly eventLoopActive = new Counter('event_loop_active', 'Number of milliseconds the event loop was active').createValue({});
     private readonly eventLoopIdle = new Counter('event_loop_idle', 'Number of milliseconds the event loop was idle').createValue({});
     private readonly memoryMetric = new Gauge('memory_usage', 'Memory usage in bytes');
@@ -40,12 +41,15 @@ export class MetricsService {
             Map<string, MetricValue<DownstreamLabels>>> = new Map();
     private readonly upstreamMetricValues: Map<UpstreamMetric,
             Map<string, Map<string, MetricValue<UpstreamLabels>>>> = new Map();
+    private readonly downstreamLatencyValues: Map<string, Map<string,
+            MetricValue<DownstreamLatencyLabels>>> = new Map();
 
     async getMetrics(): Promise<Metric<any>[]> {
         await this.updatePerformanceMetrics();
         return [
             ...Object.values(this.downstreamMetrics),
             ...Object.values(this.upstreamMetrics),
+            this.downstreamLatencyMetric,
             this.eventLoopActive.metric,
             this.eventLoopIdle.metric,
             this.memoryMetric,
@@ -73,6 +77,19 @@ export class MetricsService {
             service: host,
             target,
         }));
+
+        return metricValue;
+    }
+
+    getDownstreamLatencyValue(rawHost: string, bucket: string): MetricValue<DownstreamLatencyLabels> {
+        const host = rawHost || '*';
+        const bucketMap = this.getWithDefault(this.downstreamLatencyValues, rawHost,
+                () => new Map<string, MetricValue<DownstreamLatencyLabels>>());
+        const metricValue = this.getWithDefault(bucketMap, bucket,
+                () => this.downstreamLatencyMetric.createValue({
+                    service: host,
+                    latency: bucket,
+                }))
 
         return metricValue;
     }

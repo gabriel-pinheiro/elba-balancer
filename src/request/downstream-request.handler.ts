@@ -12,6 +12,7 @@ import { returnError } from '../utils/utils';
 import { logSteps } from './decorators/log-steps.decorator';
 import { trackHealth } from './decorators/track-health.decorator';
 import { trackMetrics } from './decorators/track-metrics.decorator';
+import { trackLatency } from './decorators/track-latency.decorator';
 
 const ATTEMPT_HEADER = 'x-elba-attempts';
 const TARGET_HEADER = 'x-elba-target';
@@ -19,6 +20,7 @@ const TARGET_HEADER = 'x-elba-target';
 @logSteps
 @trackHealth
 @trackMetrics
+@trackLatency
 export class DownstreamRequestHandler extends Podium {
     protected readonly attempts: Attempt[] = [];
     protected readonly startTime = new Date();
