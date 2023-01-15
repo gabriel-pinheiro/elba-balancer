@@ -10,6 +10,7 @@
     "prebuild": "rimraf dist",
     "build": "tsc",
     "package": "pkg --compress GZip --targets node14-linux --output bin/elba .",
+    "package:arm": "pkg --compress GZip --targets node14-linux-arm64 --output bin/elba .",
     "start": "node dist/main",
     "start:dev": "nodemon --config nodemon.json",
     "start:prod": "node dist/main",

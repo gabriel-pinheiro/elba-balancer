@@ -1,0 +1,23 @@
+name: Build and publish container
+
+on:
+  push:
+    tags:
+      - 0.*
+      - 1.*
+      - 2.*
+
+jobs:
+
+  publish-container:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Docker build and push
+      uses: docker/build-push-action@v1
+      with:
+        username: gabrielctpinheiro
+        password: ${{ secrets.DOCKERHUB_SECRET }}
+        repository: gabrielctpinheiro/elba
+        tags: latest
+        tag_with_ref: true

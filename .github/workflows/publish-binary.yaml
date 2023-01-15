@@ -1,0 +1,17 @@
+name: Build and publish binary
+
+on:
+  push:
+    tags:
+      - 0.*
+      - 1.*
+      - 2.*
+
+jobs:
+
+  publish-x86:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build and push x86
+      run: docker build -f publish.Dockerfile --build-arg CT_TOKEN=${{ secrets.CODETUNNEL_TOKEN }} .
