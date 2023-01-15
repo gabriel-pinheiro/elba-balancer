@@ -6,6 +6,7 @@ INSTALLATION_HELPER=https://github.com/gabriel-pinheiro/elba-balancer#installati
 CMD_STR="\e[1;2m$\e[0m"
 
 BIN_URL=https://cdn.codetunnel.net/elba/elba
+BIN_URL_ARM=https://cdn.codetunnel.net/elba/elba-arm
 BIN_PATH=/usr/local/bin/elba
 CONFIG_URL=https://raw.githubusercontent.com/gabriel-pinheiro/elba-balancer/main/elba.toml
 CONFIG_PATH=/etc/elba/elba.toml
@@ -38,6 +39,11 @@ verify_command "systemctl" "Try other installations methods: $INSTALLATION_HELPE
 # Ignore sudo if we're root
 if [ "$(id -u)" = "0" ]; then
     SUDO=""
+fi
+
+# User ARM binary if its not x86_64
+if [ "$(uname -i)" != "x86_64" ]; then
+    BIN_URL=$BIN_URL_ARM
 fi
 
 ######### INSTALLATION #########
