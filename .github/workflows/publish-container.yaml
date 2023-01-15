@@ -9,7 +9,7 @@ on:
 
 jobs:
 
-  publish-api:
+  publish-container:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2

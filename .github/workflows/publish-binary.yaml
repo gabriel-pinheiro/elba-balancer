@@ -9,9 +9,9 @@ on:
 
 jobs:
 
-  publish-api:
+  publish-x86:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Docker build and push
+    - name: Build and push x86
       run: docker build -f publish.Dockerfile --build-arg CT_TOKEN=${{ secrets.CODETUNNEL_TOKEN }} .
