@@ -1,6 +1,6 @@
 import { Service } from "../utils/decorators/service";
 import { Counter, Gauge, Metric, MetricValue } from "../utils/prometheus";
-import { DownstreamLatencyLabels, DownstreamLabels, UpstreamLabels } from "./data/labels";
+import { DownstreamDurationLabels, DownstreamLabels, UpstreamLabels } from "./data/labels";
 import { performance } from "perf_hooks";
 import { memoryUsage } from "process";
 
@@ -28,7 +28,9 @@ export class MetricsService {
         target_status: new Gauge<UpstreamLabels>('target_status',
             'Status of upstream targets. 0 is down, 1 is up'),
     };
-    private readonly downstreamLatencyMetric = new Counter<DownstreamLatencyLabels>('downstream_latency', 'Number of responses (success) with less than "latency" ms');
+    private readonly downstreamLatencyMetric
+            = new Counter<DownstreamDurationLabels>('elba_downstream_request_duration_seconds_bucket',
+                    'Number of responses that took less than "le" seconds');
     private readonly eventLoopActive = new Counter('event_loop_active', 'Number of milliseconds the event loop was active').createValue({});
     private readonly eventLoopIdle = new Counter('event_loop_idle', 'Number of milliseconds the event loop was idle').createValue({});
     private readonly memoryMetric = new Gauge('memory_usage', 'Memory usage in bytes');
@@ -41,8 +43,8 @@ export class MetricsService {
             Map<string, MetricValue<DownstreamLabels>>> = new Map();
     private readonly upstreamMetricValues: Map<UpstreamMetric,
             Map<string, Map<string, MetricValue<UpstreamLabels>>>> = new Map();
-    private readonly downstreamLatencyValues: Map<string, Map<string,
-            MetricValue<DownstreamLatencyLabels>>> = new Map();
+    private readonly downstreamDurationValues: Map<string, Map<string,
+            MetricValue<DownstreamDurationLabels>>> = new Map();
 
     async getMetrics(): Promise<Metric<any>[]> {
         await this.updatePerformanceMetrics();
@@ -81,15 +83,15 @@ export class MetricsService {
         return metricValue;
     }
 
-    getDownstreamLatencyValue(rawHost: string, bucket: string): MetricValue<DownstreamLatencyLabels> {
+    getDownstreamLatencyValue(rawHost: string, bucket: string): MetricValue<DownstreamDurationLabels> {
         const host = rawHost || '*';
-        const bucketMap = this.getWithDefault(this.downstreamLatencyValues, rawHost,
-                () => new Map<string, MetricValue<DownstreamLatencyLabels>>());
+        const bucketMap = this.getWithDefault(this.downstreamDurationValues, rawHost,
+                () => new Map<string, MetricValue<DownstreamDurationLabels>>());
         const metricValue = this.getWithDefault(bucketMap, bucket,
                 () => this.downstreamLatencyMetric.createValue({
                     service: host,
-                    latency: bucket,
-                }))
+                    le: bucket,
+                }));
 
         return metricValue;
     }

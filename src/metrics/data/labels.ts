@@ -2,9 +2,9 @@ export type DownstreamLabels = {
     service: string;
 };
 
-export type DownstreamLatencyLabels = {
+export type DownstreamDurationLabels = {
     service: string;
-    latency: string;
+    le: string;
 };
 
 export type UpstreamLabels = {

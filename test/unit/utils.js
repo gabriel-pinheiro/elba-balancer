@@ -1,5 +1,5 @@
 const Code = require('@hapi/code');
-const { returnError } = require('../../dist/utils/utils');
+const { returnError, bucket } = require('../../dist/utils/utils');
 
 const { expect } = Code;
 
@@ -17,5 +17,19 @@ module.exports.run = ({ it }) => () => {
         const [error, result] = await returnError(promise);
         expect(error).to.equal(7);
         expect(result).to.be.undefined();
+    });
+
+    it('bucket must return correct bucket', async () => {
+        expect(bucket(0, 50)).to.equal(50);
+        expect(bucket(1, 50)).to.equal(50);
+        expect(bucket(30, 50)).to.equal(50);
+        expect(bucket(50, 50)).to.equal(50);
+        expect(bucket(51, 50)).to.equal(100);
+        expect(bucket(99, 50)).to.equal(100);
+        expect(bucket(100, 50)).to.equal(100);
+        expect(bucket(101, 50)).to.equal(200);
+        expect(bucket(799, 50)).to.equal(800);
+        expect(bucket(800, 50)).to.equal(800);
+        expect(bucket(801, 50)).to.equal(1600);
     });
 };
