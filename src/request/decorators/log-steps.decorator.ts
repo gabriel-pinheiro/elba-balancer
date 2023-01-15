@@ -17,27 +17,28 @@ export function logSteps<C extends { new (...args: any[]): DownstreamRequestHand
         private _logSteps_onDownstreamRequest(): void {
             this.logger.info(`got request on ${this.req.url}`, { topic: 'downstream-request' });
         }
-        
+
         private _logSteps_onDownstreamResponse(): void {
             this.logStep('info', 'request completed', 'downstream-response');
         }
-    
+
         private _logSteps_onDownstreamError({ error, response }: { error: any, response: Hapi.ResponseObject }): void {
             this.logStep('error', `downstream request failed after limit with ${error ? `error: ${error}` : `status ${response.statusCode}`}`, 'downstream-error');
         }
-    
+
         private _logSteps_onUpstreamRequest(target: ServiceTargetConfig): void {
             this.logStep('debug', `attempting to proxy to ${target.name}`, 'upstream-request');
         }
-    
+
         private _logSteps_onUpstreamError({ error, response }: { error: any, response: Hapi.ResponseObject }): void {
             this.logStep('warn', `upstream request failed with ${error ? `error: ${error}` : `status ${response.statusCode}`}`, 'upstream-error');
         }
-    
+
         private logStep(severity: 'debug' | 'info' | 'warn' | 'error', message: string, topic: string) {
             this.logger[severity](message, {
                 delay: new Date().getTime() - this.startTime.getTime(),
                 topic,
+                service: this.upstream.config.host || '*',
                 target: this.lastTargetName,
                 attempt: this.attempts.length,
             });
