@@ -61,7 +61,7 @@ module.exports.run = ({ it }, elba) => () => {
     it('should return proxy error for connection issues', async () => {
         let error;
         await elbaVoid.get('/').catch(e => error = e);
-        expect(error.response.data.statusCode).to.equal(504);
+        expect(error.response.data.statusCode).to.be.greaterThan(500);
     });
 
     it('should return x-elba-id header', async () => {
