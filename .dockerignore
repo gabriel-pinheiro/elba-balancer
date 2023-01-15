@@ -1,6 +1,7 @@
 Dockerfile
 publish.Dockerfile
 .dockerignore
+.github
 .git
 .gitignore
 node_modules

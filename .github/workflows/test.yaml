@@ -51,3 +51,17 @@ jobs:
       run: npm install
     - name: Build and test
       run: npm run test:mocks
+
+  test-node-19:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      name: Repository checkout
+    - uses: actions/setup-node@v2
+      name: Node 19 Setup
+      with:
+        node-version: '19'
+    - name: Install dependencies
+      run: npm install
+    - name: Build and test
+      run: npm run test:mocks
