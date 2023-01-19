@@ -53,10 +53,10 @@ verbosity = "debug"
 - To monitor the traffic being sent to each upstream target, check the [metrics module documentation](./metrics.md).
 - Targets that are marked as down are skipped unless all of them are down and `service.health.none_healthy_is_all_healthy` is set to true.
 - If `service.health.none_healthy_is_all_healthy` is set to false and all targets are down, the request will fail with 503.
-- To understand how targets are marked as down or up, check the [health module documentation](./health.png).
+- To understand how targets are marked as down or up, check the [health module documentation](./health.md).
 - A single downstream request can be retried on different targets so the client doesn't experience any downtime even when a target fails. Check the [retry module documentation](./retry.md) for more information.
 - For more information on how to troubleshoot which requests are being sent to which targets, check the [headers module](./headers.md) and the [logs module](./logs.md) documentations.
-- `service.timeout.connect` is the maximum amount of time to wait for a connection to be established.
-- `service.timeout.target` is the maximum amount of time to wait for a target's response.
+- `service.timeout.connect` is the maximum amount of time to wait for a connection to be established. Defaults to `3`seconds.
+- `service.timeout.target` is the maximum amount of time to wait for a target's response. Defaults to `30`seconds.
 
 ![Load Balancing Diagram](./balance-diagram.png)
