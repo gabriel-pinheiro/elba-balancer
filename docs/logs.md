@@ -9,10 +9,10 @@ verbosity = "debug"   # Minimum verbosity to log: debug,info,warn,error,fatal
 
 ## What each verbosity logs?
 
-- **fatal**: Errors from which Elba cannot recover itself. Generally only happens on startup: Invalid settings, port in use, no permission to bind to port, no permission to read settings, etc.
+- **fatal**: Errors from which Elba cannot recover itself, it'll stop with a non-zero exit code. Generally only happens on startup: Invalid settings, port in use, no permission to bind to port, no permission to read settings, etc.
 - **error**: Errors that will impact the downstream response (check [concepts](./concepts.md)). That is, the error will be seen by the clients.
 - **warn**: Errors that won't affect clients due to retries; targets becoming unhealthy.
-- **info**: General information about Elba core (server startup, targets becoming healthy) or downstream requests being received.
+- **info**: General information about Elba core (like server startup steps), targets becoming healthy, downstream requests being received or downstream responses being sent.
 - **debug**: Elba will log everything, even the time its waiting between requests due to delay/cooldown settings. Useful for troubleshooting.
 
 ## What is logged with each downstream request?
@@ -20,7 +20,7 @@ verbosity = "debug"   # Minimum verbosity to log: debug,info,warn,error,fatal
 ### General information
 
 Every step of a request will log:
-- **date**: The moment that elba received the request in ISO format.
+- **date**: The moment that elba is taking that step.
 - **trace**: A tracing ID that allows you to find other logs related to the same request. You can also use this to filter logs by ID, the same id is sent on every downstream response. Check [headers module documentation](./headers.md) for more information.
 - **level**: The verbosity of that log, according to the color in the diagram. You can choose what verbosities will be logged in the settings.
 - **log**: A short message describing the event.
@@ -28,14 +28,14 @@ Every step of a request will log:
 - **service**: Which service matched the host of the downstream request. More information in the [load balance module documentation](./load-balance.md).
 
 Every step of a request but the first one will also log:
-- **target**: Which upstream target was chosen to receive that attempt of the request. More information in the [load balance module documentation](./load-balance.md).
+- **target**: Which upstream target was chosen to receive that attempt of the downstream request. More information in the [load balance module documentation](./load-balance.md).
 - **attempt**: The number of this attempt to proxy a downstream request to the upstream targets. 1 is the first attempt, 2 is the first retry (2nd attempt), and so on. More information in the [retry module documentation](./retry.md).
 - **delay**: How many milliseconds have passed since Elba received the downstream request.
 
 More information:
-- The last upstream response/error is never logged as it would contain the same information as the downstream response/error which **is** logged.
+- The last upstream response/error is never logged as it would contain the same information as the downstream response/error which **is** logged. This way, there is no `upstream-response` topic, the information about the response will be sent in the `downstream-response`. (But there is a `upstream-error` as it might not be the last attempt, if it is it won't be logged either). This is more clear in the examples below.
 - More steps regarding delay, cooldown, health are logged deppending on your settings.
-- A downstream/upstream response is considered an error when the response code is configured as a retryable response. Errors codes can be received as `upstream-response` if they are not configured as retryable and success codes can be received as `upstream-error` if they are configured as retryable. More information on [retry module documentation](./retry.md).
+- A downstream/upstream response is considered an error when the response code is configured as a retryable response. Errors codes can be received as `upstream-response` if they are not configured as retryable and success codes can be received as `upstream-error` if they are configured as retryable. More information in the [retry module documentation](./retry.md).
 
 ### 1. No retries
 

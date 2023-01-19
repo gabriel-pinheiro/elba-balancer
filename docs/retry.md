@@ -85,7 +85,7 @@ verbosity = "debug"
 - If no targets are available and `service.health.none_healthy_is_all_healthy` is set to false, elba will not retry and return a `503` code error.
 - For chosing an available target, the following algorithm is used:
   - If there are healthy targets not chosen yet for the current downstream request, a random one is chosen.
-  - If all healthy targets were already attempted for the current downstream request, the one that has been attempted the farthest from now is chosen.
+  - If all healthy targets were already attempted for the current downstream request, the one that has been attempted the farthest from now is chosen. This means that a target that previously failed will only be used if all the other targets have also already failed.
   - If all targets are down and `service.health.none_healthy_is_all_healthy` is set to true, the same two rules above are applied for all targets.
   - These rules are evaluated at upstream-request time.
 - To troubleshoot retries, check the [logs module documentation](logs.md) for more information on tracing.
