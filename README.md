@@ -1,5 +1,5 @@
 # Elba - Load balancer with retries
-Elba is a highly customizable HTTP load balancer with many retry options and exported metrics. It's ideal for integrations that aren't very stable or integrations behind VPNs or networks that aren't stable.
+Elba is a highly customizable HTTP load balancer with many retry options and exported metrics. It's ideal for integrations that aren't very stable or integrations behind VPNs or networks that aren't stable. It'll give you insights on whats happening in your integrations via its advanced metrics.
 
 ## Installation
 ### Linux
@@ -9,6 +9,21 @@ $ curl -sfL https://cdt.one/elba.sh | sh -
 ```
 
 It'll create Elba's service, start and enable it.
+
+You can check Elba status with:
+```shell
+$ sudo systemctl status elba
+```
+
+Check its logs with:
+```shell
+$ sudo journalctl -u elba
+```
+
+Edit the configuration file on `/etc/elba/elba.toml` and restart it with:
+```shell
+$ sudo systemctl restart elba
+```
 
 ### Using Docker
 First download [the default configuration file](https://raw.githubusercontent.com/gabriel-pinheiro/elba-balancer/main/elba.toml):
@@ -45,7 +60,7 @@ $ helm install elba ./
 ```
 
 ## Settings
-These are the supported options for your `elba.toml` configuration file:
+These are some of the supported options for your `elba.toml` configuration file:
 
 ```toml
 [server]
@@ -88,11 +103,11 @@ verbosity = "debug"   # Minimum verbosity to log: debug,info,warn,error,fatal
   [service.health]
   # Consecutive retriable errors to consider a target to be down, default: 3
   threshold = 3
-  # Time to wait to mark a target as UP again, default: 10
+  # Seconds to wait to mark a target as UP again, default: 10
   timeout   = 10
   # If all targets are down, balance between all of them instead of failing with 503
   # This can greatly increase the load in the upstream services because each request
-  # received might go to all of them several times deppending on the configs above
+  # received might go to all of them several times deppending on the retry settings
   # default: false
   none_healthy_is_all_healthy = false
 
@@ -135,166 +150,12 @@ verbosity = "debug"   # Minimum verbosity to log: debug,info,warn,error,fatal
 
 ```
 
-## X-Elba headers
-Elba will add the following headers to the response:
-- `X-Elba-Target`: The target that was chosen to respond to the request
-- `X-Elba-Attempts`: The amount of attempts that were made to reach the target
-- `X-Elba-Id`: The ID of the request, all the logs related to it will have a `trace=<id>`. Logs not related to a request will have a `trace=000000000000` tag.
+# Elba Modules
 
-## Load balancing
-- Targets are chosen at random at upstream-request time.
-- Targets that are marked as down are skipped unless all of them are down and `service.health.none_healthy_is_all_healthy` is set to true.
-- If `service.health.none_healthy_is_all_healthy` is set to false, the request will fail with 503.
-- `service.timeout.connect` is the maximum amount of time to wait for a connection to be established.
-- `service.timeout.target` is the maximum amount of time to wait for a target's response.
-
-## Retries
-- `service.retry.delay` is the amount of time to wait between retries.
-- `service.retry.limit` is the maximum amount of retries before failing with the last error.
-- `service.retry.cooldown` is the amount of time wanted before retrying in a target that previously failed for that request. A cooldown of 3000 doesn't mean that extra 3 seconds will be waited, but that the time between the last retry and the next one will be at least 3000 millis.
-- An upstream request is considered failed if the response code is not in the list of `retryable_errors`.
-- Failed requests are retried until `service.retry.limit` is reached, until all targets are down (if `service.health.none_healthy_is_all_healthy` is set to false), until a successful response is received, or until the request is aborted by the client.
-- For chosing an available target, the following algorithm is used:
-  - If there are healthy targets not chosen yet for the current downstream request, a random one is chosen.
-  - If all healthy targets were already attempted for the current downstream request, the one that has been attempted the farthest from now is chosen.
-  - If all targets are down and `service.health.none_healthy_is_all_healthy` is set to true, the same two rules above are applied for all targets.
-  - These rules are evaluated at upstream-request time.
-
-## Health
-- If a target reaches `service.health.threshold` **consecutive** failed requests, it is marked as unhealthy.
-- Unhealthy targets stop receiving requests for `service.health.timeout` seconds.
-- After `service.health.timeout` seconds, a target receives (most likely) one request and is marked as UP if the response is successful or continues to be down if the response is not successful.
-- (most likely because until the response, the target is considered up and might get more requests in scenarios of high request rates)
-
-## Healthcheck
-Elba has a built-in healthcheck endpoint that can be used to check if it's running:
-```shell
-$ curl http://localhost:8080/__elba__/health
-
-{
-  "status": "ok",
-  "upstreams": [
-    {
-      "host": "api.default.svc.cluster.local",
-      "healthyTargets": [
-        "instance001",
-        "instance002",
-        "instance003"
-      ],
-      "unhealthyTargets": []
-    },
-    {
-      "host": "*",
-      "healthyTargets": [
-        "instance001",
-        "instance002",
-        "instance003"
-      ],
-      "unhealthyTargets": []
-    }
-  ]
-}
-```
-
-## Prometheus metrics
-Elba exposes Prometheus metrics on `/__elba__/metrics`
-```shell
-$ curl http://localhost:8080/__elba__/metrics
-
-# HELP downstream_success Successfully proxied responses from elba to downstream
-# TYPE downstream_success counter
-downstream_success{service="api.default.svc.cluster.local"} 0
-downstream_success{service="*"} 0
-# HELP downstream_error Proxy error responses from elba to downstream
-# TYPE downstream_error counter
-downstream_error{service="api.default.svc.cluster.local"} 0
-downstream_error{service="*"} 0
-# HELP targets_up Shows how many targets for each service are up
-# TYPE targets_up gauge
-targets_up{service="api.default.svc.cluster.local"} 0
-targets_up{service="*"} 0
-# HELP targets_down Shows how many targets for each service are down
-# TYPE targets_down gauge
-targets_down{service="api.default.svc.cluster.local"} 3
-targets_down{service="*"} 3
-# HELP upstream_success 2XX or non-retriable errors from upstream to elba
-# TYPE upstream_success counter
-upstream_success{service="api.default.svc.cluster.local",target="instance001"} 0
-upstream_success{service="api.default.svc.cluster.local",target="instance002"} 0
-upstream_success{service="api.default.svc.cluster.local",target="instance003"} 0
-upstream_success{service="*",target="instance001"} 0
-upstream_success{service="*",target="instance002"} 0
-upstream_success{service="*",target="instance003"} 0
-# HELP upstream_error Retriable errors from upstream to elba
-# TYPE upstream_error counter
-upstream_error{service="api.default.svc.cluster.local",target="instance001"} 0
-upstream_error{service="api.default.svc.cluster.local",target="instance002"} 0
-upstream_error{service="api.default.svc.cluster.local",target="instance003"} 0
-upstream_error{service="*",target="instance001"} 0
-upstream_error{service="*",target="instance002"} 0
-upstream_error{service="*",target="instance003"} 0
-# HELP target_status Status of upstream targets. 0 is down, 1 is up
-# TYPE target_status gauge
-target_status{service="api.default.svc.cluster.local",target="instance001"} 1
-target_status{service="api.default.svc.cluster.local",target="instance002"} 1
-target_status{service="api.default.svc.cluster.local",target="instance003"} 1
-target_status{service="*",target="instance001"} 1
-target_status{service="*",target="instance002"} 1
-target_status{service="*",target="instance003"} 1
-# HELP elba_downstream_request_duration_seconds_bucket Number of responses that took less than "le" seconds
-# TYPE elba_downstream_request_duration_seconds_bucket counter
-elba_downstream_request_duration_seconds_bucket{service="api.default.svc.cluster.local",le="000.64"} 0
-elba_downstream_request_duration_seconds_bucket{service="api.default.svc.cluster.local",le="001.28"} 0
-elba_downstream_request_duration_seconds_bucket{service="api.default.svc.cluster.local",le="002.56"} 0
-elba_downstream_request_duration_seconds_bucket{service="*",le="000.64"} 0
-elba_downstream_request_duration_seconds_bucket{service="*",le="001.28"} 0
-elba_downstream_request_duration_seconds_bucket{service="*",le="002.56"} 0
-# HELP event_loop_active Number of milliseconds the event loop was active
-# TYPE event_loop_active counter
-event_loop_active{} 84.89516399976128
-# HELP event_loop_idle Number of milliseconds the event loop was idle
-# TYPE event_loop_idle counter
-event_loop_idle{} 59451.823004
-# HELP memory_usage Memory usage in bytes
-# TYPE memory_usage gauge
-memory_usage{type="heap_total"} 13766656
-memory_usage{type="heap_used"} 11503048
-memory_usage{type="rss"} 56487936
-```
-
-
-Here are some examples of how to query the metrics:
-Which targets are healthy for a service:
-```promql
-min(target_status{service="$service"}) by (target)
-```
-
-Number of successful requests per minute to each target:
-```promql
-sum(rate(upstream_success{service="$service"}[$__interval])*60) by (target)
-```
-
-Number of failed requests per minute to each target:
-```promql
-sum(rate(upstream_error{service="$service"}[$__interval])*60) by (target)
-```
-
-Number of failed downstream requests per minute:
-```promql
-sum(rate(downstream_error{service="$service"}[$__interval])*60) by (service)
-```
-
-Memory usage:
-```promql
-memory_usage
-```
-
-Elba load percentage (event loop usage):
-```promql
-100 * rate(event_loop_active[$__interval]) / (rate(event_loop_active[$__interval]) + rate(event_loop_idle[$__interval]))
-```
-
-Heatmap of request duration:
-```promql
-sum (increase(elba_downstream_request_duration_seconds_bucket[$__interval])) by (le) / ignoring(le) group_left sum(increase(downstream_success[$__interval]))
-```
+Elba provides you with many options to balance your requests, retry in case of failures, monitor the health of your upstream services, monitor your requests, troubleshoot issues with your integrations and a lot more. Check our [base concepts](./docs/concepts.md) and more about each module:
+- **[Load Balance Module](./docs/load-balance.md)**: Balance the requests between your targets, define multiple services going through Elba, and choose how they will appear in the logs and monitoring.
+- **[Retry Module](./docs/retry.md)**: Retry failed requests, choose when a request is retried, how many times, define cooldowns, delays.
+- **[Health Module](./docs/health.md)**: Keep track of the health of each upstream target, remove unhealthy targets from the load balancing, define the rules to mark a target as UP or DOWN.
+- **[Metrics Module](./docs/metrics.md)**: Elba exposes many advanced metrics that will let you monitor the status of your environments and integrations.
+- **[Logs Module](./docs/logs.md)**: Understand how Elba logs the actions, downstream and upstream requests and responses to help you with troubleshooting issues with your integrations.
+- **[Headers Module](./docs/headers.md)**: Elba adds headers to the downstream responses to help with troubleshooting. Check how to use them.

@@ -6,4 +6,5 @@ publish.Dockerfile
 .gitignore
 node_modules
 dist
+docs
 coverage.html
