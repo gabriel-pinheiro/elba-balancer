@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as toml from '@iarna/toml';
 import {Provider} from "../utils/decorators/provider";
 import { Config, configSchema, ServiceConfig } from './data/config';
+import { logger } from '../utils/logger';
 
 @Provider()
 export class ConfigProvider {
@@ -17,10 +18,10 @@ export class ConfigProvider {
 
             this.config = validation.value;
             this.validateConfig();
+            logger.verbosity = this.config.server.verbosity;
         } catch (e) {
-            console.error(`Failed to load config at ${configPath}:`);
-            console.error(e.details?.[0]?.message || e);
-            process.exit(1);
+            const error = e.details?.[0]?.message || e.message || e;
+            logger.fatal(`failed to load config at ${configPath}`, { error });
         }
     }
 

@@ -37,7 +37,8 @@ export class Server {
         await Promise.all(pluginRegistrationTasks);
 
         this.logger.debug('starting the server');
-        await this.app.start();
+        await this.app.start()
+            .catch(e => this.logger.fatal('failed to start the server', { error: e.message || e }));
 
         const deltaT = (new Date().getTime() - this.startDate.getTime()) / 1000;
         this.logger.info(`server started on port ${this.config.config.server.port} after ${deltaT} seconds`);

@@ -1,9 +1,9 @@
 import * as logfmt from 'logfmt';
 import * as rTracer from 'cls-rtracer';
-import { configProvider } from '../config/config.service';
 
+export type Verbosity = 'debug' | 'info' | 'warn' | 'error' | 'fatal';
 export type LogOptions = Record<string, string | number | boolean>;
-export type ILogger = Record<'debug' | 'info' | 'warn' | 'error' | 'fatal', (log: string, options?: LogOptions) => void>;
+export type ILogger = Record<Verbosity, (log: string, options?: LogOptions) => void>;
 export const Logger = Symbol('Logger');
 
 const VERBOSITIES = {
@@ -13,9 +13,14 @@ const VERBOSITIES = {
     error: 1,
     fatal: 0,
 };
-const VERBOSITY = VERBOSITIES[configProvider.config.server.verbosity];
 
 export class LogfmtLogger {
+    private _verbosity = VERBOSITIES['debug'];
+
+    set verbosity(verbosity: Verbosity) {
+        this._verbosity = VERBOSITIES[verbosity];
+    }
+
     debug(log: string, options?: LogOptions) {
         this.log(log, 'debug', options);
     }
@@ -38,7 +43,7 @@ export class LogfmtLogger {
     }
 
     private log(log: string, level: string, options: LogOptions = {}) {
-        if(VERBOSITY < VERBOSITIES[level]) {
+        if(this._verbosity < VERBOSITIES[level]) {
             return;
         }
 
@@ -52,4 +57,4 @@ export class LogfmtLogger {
     }
 }
 
-export const logger: ILogger = new LogfmtLogger();
+export const logger = new LogfmtLogger();
