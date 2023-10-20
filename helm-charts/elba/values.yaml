@@ -1,5 +1,39 @@
 replicaCount: 1
 
+# -- (Optional) use this parameter to define a custom configuration for elba application
+# -- it uses YAML and converts to TOML
+elbaConfig: null
+# -- example to replicate the exact configuration in YAML
+# server:
+#   host: "0.0.0.0"
+#   port: "8080"
+#   verbosity: "debug"
+
+# service:
+#   - timeout:
+#       connect: 3
+#       target: 30
+#     health:
+#       threshold: 3
+#       timeout: 10
+#       none_health_is_all_healthy: false
+#     retry:
+#       connect: 6
+#       target: 100
+#       cooldown: 3000
+#       retryable_errors:
+#         - CODE_502
+#         - CODE_503
+#         - CODE_504
+#         - CODE_500
+#     target:
+#       - name: instance001
+#         url: https://elba.mockoapp.net/s1
+#       - name: instance002
+#         url: https://elba.mockoapp.net/s2
+#       - name: "instance003"
+#         url: "https://elba.mockoapp.net/s3"
+
 image:
   repository: gabrielctpinheiro/elba
   pullPolicy: IfNotPresent
@@ -15,12 +49,12 @@ service:
   port: 8080
 
 resources: {}
-  # limits:
-  #   cpu: 200m
-  #   memory: 256Mi
-  # requests:
-  #   cpu: 10m
-  #   memory: 64Mi
+# limits:
+#   cpu: 200m
+#   memory: 256Mi
+# requests:
+#   cpu: 10m
+#   memory: 64Mi
 
 nodeSelector: {}
 
@@ -29,17 +63,17 @@ tolerations: []
 affinity: {}
 
 podAnnotations:
-  prometheus.io/scrape: 'true'
-  prometheus.io/path: '/__elba__/metrics'
-  prometheus.io/port: '8080'
+  prometheus.io/scrape: "true"
+  prometheus.io/path: "/__elba__/metrics"
+  prometheus.io/port: "8080"
 
 podSecurityContext: {}
-  # fsGroup: 2000
+#   fsGroup: 2000
 
 securityContext: {}
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
+#   capabilities:
+#     drop:
+#     - ALL
+#   readOnlyRootFilesystem: true
+#   runAsNonRoot: true
+#   runAsUser: 1000

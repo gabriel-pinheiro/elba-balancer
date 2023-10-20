@@ -4,4 +4,8 @@ metadata:
   name: {{ include "elba.fullname" . }}
 data:
   elba.toml: |
-{{ .Files.Get "elba.toml" | indent 4}}
+{{- if .Values.elbaConfig }}
+{{ (.Values.elbaConfig | toToml | indent 4) }}
+{{- else }}
+{{ .Files.Get "elba.toml" | indent 4 }}
+{{- end }}
