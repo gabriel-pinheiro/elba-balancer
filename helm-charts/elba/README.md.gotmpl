@@ -1,0 +1,56 @@
+# ELBA HELM CHART
+
+{{ template "chart.badgesSection" . }}
+
+{{ template "chart.description" . }}
+
+{{ template "chart.homepageLine" . }}
+
+# Requirements
+
+- helm: `3.x`
+
+{{ template "chart.maintainersSection" . }}
+
+{{ define "chart.valueDefaultColumnRender" }}
+{{- $defaultValue := (default .Default .AutoDefault)  -}}
+{{- $notationType := .NotationType }}
+{{- if (and (hasPrefix "`" $defaultValue) (hasSuffix "`" $defaultValue) ) -}}
+{{- $defaultValue = (toPrettyJson (fromJson (trimAll "`" (default .Default .AutoDefault) ) ) ) -}}
+{{- $notationType = "json" }}
+{{- end -}}
+<pre lang="{{ $notationType }}">
+{{ $defaultValue }}
+</pre>
+{{ end }}
+
+{{ define "chart.typeColumnRender" }}
+{{ .Type }}
+{{ end }}
+
+# Input Variables
+
+{{ define "chart.valuesTableHtml" }}
+<table>
+  <thead>
+    <th>Key</th>
+    <th>Description</th>
+    <th>Type</th>
+    <th>Default</th>
+  </thead>
+  <tbody>
+  {{- range .Values }}
+    <tr>
+      <td id="{{ .Key | replace "." "--" }}"><a href="./values.yaml#L{{ .LineNumber }}">{{ .Key }}</a></td>
+      <td>{{ if .Description }}{{ .Description }}{{ else }}{{ .AutoDescription }}{{ end }}</td>
+      <td>{{- template "chart.typeColumnRender" . -}}</td>
+      <td>
+        <div style="max-width: 300px;">{{ template "chart.valueDefaultColumnRender" . }}</div>
+      </td>
+    </tr>
+  {{- end }}
+  </tbody>
+</table>
+{{ end }}
+
+{{ template "chart.valuesTableHtml" . }}
